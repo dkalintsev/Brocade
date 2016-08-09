@@ -1,0 +1,951 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "AWS CloudFormation Template to deploy a Brocade vRouter 5600 into a new VPC. The AMI is chosen based on the region in which the stack is run. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+
+	"Metadata" : {
+		"AWS::CloudFormation::Interface" : {
+			"ParameterGroups" : [
+				{
+					"Label" : { "default" : "VPC Configuration" },
+					"Parameters" : [ "AZs", "VPCCIDR", "PublicSubnetCIDR1", "PrivateSubnetCIDR1", "PublicSubnetCIDR2", "PrivateSubnetCIDR2" ]
+				},
+
+				{
+					"Label" : { "default" : "vRouter Configuration" },
+					"Parameters" : [ "vRVers", "InstanceType", "KeyName" ]
+				},
+				{
+					"Label" : { "default" : "Security Configuration" },
+					"Parameters" : [ "RemoteAccessCIDR" ]
+				}
+			],
+			"ParameterLabels" : {
+				"VPCCIDR" : { "default" : "New VPC CIDR Block:" },
+				"PublicSubnetCIDR1" : { "default" : "Public Subnet 1:" },
+				"PublicSubnetCIDR2" : { "default" : "Public Subnet 2:" },
+				"PrivateSubnetCIDR1" : { "default" : "Private Subnet 1:" },
+				"PrivateSubnetCIDR2" : { "default" : "Private Subnet 2:" },
+				"InstanceType" : { "default" : "vRouter instance type:" },
+				"vRVers" : { "default" : "vRouter Version:" },
+				"KeyName" : { "default" : "SSH Key Name:" },
+				"AZs" : { "default" : "Select two Availability Zones:" },
+				"RemoteAccessCIDR" : { "default" : "Remote Access CIDR:" }
+				
+			}
+		}
+	},
+
+	"Parameters": {
+		"InstanceType": {
+			"Description": "Please select a vRouter EC2 instance type",
+			"Type": "String",
+			"Default": "m4.large",
+			"AllowedValues": [
+				"m4.large",
+				"m4.xlarge",
+				"m4.2xlarge",
+				"m4.4xlarge"
+			],
+			"ConstraintDescription": "Must be an allowed EC2 instance type."
+		},
+
+    "vRVers" : {
+      "Description" : "Please select vRouter version. Note not all vRouter versions are available in all regions, and some older versions may not be available, too.",
+      "Type" : "String",
+      "Default" : "42R1B",
+      "AllowedValues" : [
+        "40R1",
+        "41R2B",
+        "41R3B",
+        "42R1B"
+      ],
+      "ConstraintDescription" : "Must be a valid vRouter version"
+    },
+
+		"KeyName": {
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"Default": "",
+			"Description": "Name of an existing EC2 KeyPair. Your vRouter will launch with this KeyPair.",
+      "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
+		},
+
+		"RemoteAccessCIDR": {
+			"Description": "Allowed source IP address range for SSH access into vRouter",
+			"Type": "String",
+			"MinLength": "9",
+			"MaxLength": "18",
+			"Default": "0.0.0.0/0",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+
+		"VPCCIDR": {
+			"Description": "This is the IP block for your new VPC. Typically it is a /16 from the private IP range.",
+			"Type": "String",
+			"Default": "10.8.0.0/16",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+
+    "AZs": {
+      "Description": "List of Availability Zones where Private and Public subnet pairs will be created. Please select two.",
+      "Type": "List<AWS::EC2::AvailabilityZone::Name>",
+      "ConstraintDescription": "Please select an AZ from a drop-down list."            
+    },
+
+		"PublicSubnetCIDR1": {
+			"Description": "vRouter 1 will have one interface in this public subnet.",
+			"Type": "String",
+			"Default": "10.8.1.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+
+		"PublicSubnetCIDR2": {
+			"Description": "vRouter 2 will have one interface in this public subnet.",
+			"Type": "String",
+			"Default": "10.8.2.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+
+		"PrivateSubnetCIDR1": {
+			"Description": "vRouter 1 will have its second interface in this private subnet. Your EC2 instances in this VPC will use it as their gateway.",
+			"Type": "String",
+			"Default": "10.8.3.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+		
+		"PrivateSubnetCIDR2": {
+			"Description": "vRouter 2 will have its second interface in this private subnet. Your EC2 instances in this VPC will use it as their gateway.",
+			"Type": "String",
+			"Default": "10.8.4.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		}
+
+	},
+
+	"Mappings" : {
+		"AWSRegions" : {
+			"us-east-1"      : { "Name" : "US East (N. Virginia)" },
+			"us-west-1"      : { "Name" : "US West (N. California)" },
+      "us-west-2"      : { "Name" : "US West (Oregon)" },
+      "eu-west-1"      : { "Name" : "EU (Ireland)" },
+      "eu-central-1"   : { "Name" : "EU (Frankfurt)" },
+      "ap-south-1"     : { "Name" : "Asia Pacific (Mumbai)" },
+      "ap-northeast-1" : { "Name" : "Asia Pacific (Tokyo)" },
+      "ap-northeast-2" : { "Name" : "Asia Pacific (Seoul)" },
+      "ap-southeast-1" : { "Name" : "Asia Pacific (Singapore)" },
+      "ap-southeast-2" : { "Name" : "Asia Pacific (Sydney)" },
+      "sa-east-1"      : { "Name" : "South America (São Paulo)" }
+    },
+
+    "vRAMI" : {
+      "eu-west-1" : { "40R1" : "ami-43cd6830", "41R2B" : "ami-1e5efc6d", "41R3B" : "ami-e155d592", "42R1B" : "ami-6a59cf19" },
+      "ap-southeast-1" : { "40R1" : "ami-a3c203c0", "41R2B" : "ami-3769aa54", "41R3B" : "ami-97d207f4", "42R1B" : "ami-88ad7ceb" },
+      "ap-southeast-2" : { "40R1" : "ami-f26e3791", "41R2B" : "ami-cc8cd7af", "41R3B" : "ami-0b9fbc68", "42R1B" : "ami-c5ac83a6" },
+      "eu-central-1" : { "40R1" : "ami-eacad886", "41R2B" : "ami-10bba77c", "41R3B" : "ami-4114f52e", "42R1B" : "ami-3642ae59" },
+      "ap-northeast-2" : { "41R2B" : "ami-7dad6313", "41R3B" : "ami-7d1ad313", "42R1B" : "ami-93a06bfd" },
+      "ap-northeast-1" : { "40R1" : "ami-df7351b1", "41R2B" : "ami-6100350f", "41R3B" : "ami-a7f2e2c9", "42R1B" : "ami-772ccf16" },
+      "us-east-1" : { "40R1" : "ami-dacf8bb0", "41R2B" : "ami-bfb7e3d5", "41R3B" : "ami-d79a8dbd", "42R1B" : "ami-e8bb4c85" },
+      "sa-east-1" : { "40R1" : "ami-0817ad64", "41R2B" : "ami-86b433ea", "41R3B" : "ami-5c63ec30", "42R1B" : "ami-143eb678" },
+      "us-west-1" : { "40R1" : "ami-1cd2bc7c", "41R2B" : "ami-dae18aba", "41R3B" : "ami-cd601cad", "42R1B" : "ami-342a5154" },
+      "us-west-2" : { "40R1" : "ami-bdddcddc", "41R2B" : "ami-84abb4e5", "41R3B" : "ami-7fb5411f", "42R1B" : "ami-32867852" }
+    }
+
+  },
+
+	"Conditions" : {
+	},
+	
+	"Resources": {
+
+		"VPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties": {
+				"CidrBlock": {
+					"Ref": "VPCCIDR"
+				},
+				"EnableDnsHostnames": "true",
+				"EnableDnsSupport": "true",
+				"Tags": [
+					{	"Key": "Application",
+						"Value": "vRouter 5600 Quick Start"
+					},
+
+          { "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "VPC" ] ] }
+          }
+
+				]
+			}
+		},
+
+		"PublicSubnet1": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": {
+					"Ref": "PublicSubnetCIDR1"
+				},
+				"Tags": [
+          { "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSub1" ] ] }
+					}
+				],
+				"AvailabilityZone": {
+          "Fn::Select": [ "0", { "Ref": "AZs" } ]
+				}
+			}
+		},
+
+		"PublicSubnet2": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": {
+					"Ref": "PublicSubnetCIDR2"
+				},
+				"Tags": [
+          { "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSub2" ] ] }
+					}
+				],
+				"AvailabilityZone": {
+          "Fn::Select": [ "1", { "Ref": "AZs" } ]
+				}
+			}
+		},
+
+		"PrivateSubnet1": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": {
+					"Ref": "PrivateSubnetCIDR1"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub1" ] ] }
+					}
+				],
+				"AvailabilityZone": {
+          "Fn::Select": [ "0", { "Ref": "AZs" } ]
+				}
+			}
+		},
+
+		"PrivateSubnet2": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": {
+					"Ref": "PrivateSubnetCIDR2"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub2" ] ] }
+					}
+				],
+				"AvailabilityZone": {
+          "Fn::Select": [ "1", { "Ref": "AZs" } ]
+				}
+			}
+		},
+
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "IGW" ] ] }
+          }
+        ]
+      }
+    },
+
+    "AttachGateway": {
+      "DependsOn": "InternetGateway",
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+
+		"PublicSubnetRouteTable": {
+      "DependsOn": "AttachGateway",
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSubRouteTab" ] ] }
+					}
+				]
+			}
+		},
+
+    "PublicRoute1": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "AttachGateway",
+	      "Properties": {
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+
+    "PublicSubnet1RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        }
+      }
+    },
+
+    "PublicSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        }
+      }
+    },
+
+    "NATSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "vRouter Access Rules",
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "-1",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "RemoteAccessCIDR"
+            }
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "-1",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          }
+        ],
+				"Tags": [
+					{
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vRouterSG" ] ] }
+					}
+				]
+      }
+    },
+
+    "vRouter1EIP": {
+      "Type": "AWS::EC2::EIP",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+    "vRouter2EIP": {
+      "Type": "AWS::EC2::EIP",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+    "vRouter1Interface1": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet1"
+        },
+        "Description": "External interface for the vRouter 1",
+        "GroupSet": [
+          {
+            "Ref": "NATSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vR1PubInt" ] ] }
+          },
+          {
+            "Key": "Network",
+            "Value": "Public"
+          }
+        ]
+      }
+    },
+
+    "vRouter2Interface1": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet2"
+        },
+        "Description": "External interface for the vRouter 2",
+        "GroupSet": [
+          {
+            "Ref": "NATSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vR2PubInt" ] ] }
+          },
+          {
+            "Key": "Network",
+            "Value": "Public"
+          }
+        ]
+      }
+    },
+
+    "vRouter1Interface2": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet1"
+        },
+        "Description": "Internal interface for the vRouter 1",
+        "GroupSet": [
+          {
+            "Ref": "NATSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vR1PriInt" ] ] }
+          },
+          {
+            "Key": "Network",
+            "Value": "Private"
+          }
+        ]
+      }
+    },
+
+    "vRouter2Interface2": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet2"
+        },
+        "Description": "Internal interface for the vRouter 2",
+        "GroupSet": [
+          {
+            "Ref": "NATSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vR2PriInt" ] ] }
+          },
+          {
+            "Key": "Network",
+            "Value": "Private"
+          }
+        ]
+      }
+    },
+
+    "AssociatevRouter1Interface": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "vRouter1EIP",
+            "AllocationId"
+          ]
+        },
+        "NetworkInterfaceId": {
+          "Ref": "vRouter1Interface1"
+        }
+      }
+    },
+
+    "AssociatevRouter2Interface": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "vRouter2EIP",
+            "AllocationId"
+          ]
+        },
+        "NetworkInterfaceId": {
+          "Ref": "vRouter2Interface1"
+        }
+      }
+    },
+
+    "vRouterIAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [ "ec2.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "vRouterRoutingTableAccess",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:AssociateRouteTable",
+                    "ec2:CreateRoute",
+                    "ec2:CreateRouteTable",
+                    "ec2:DeleteRoute",
+                    "ec2:DeleteRouteTable",
+                    "ec2:DescribeRouteTables",
+                    "ec2:DescribeVpcs",
+                    "ec2:ReplaceRoute",
+                    "ec2:DisassociateRouteTable",
+                    "ec2:ReplaceRouteTableAssociation"                                ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    "vRouterInstanceIAMProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "vRouterIAMRole"
+          }
+        ]
+      }
+    },
+
+
+    "vRouter1": {
+      "Type": "AWS::EC2::Instance",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "IamInstanceProfile": { "Ref": "vRouterInstanceIAMProfile"},
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vRouter1" ] ] }
+          }
+        ],
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "NetworkInterfaces": [
+          {
+            "NetworkInterfaceId": {
+              "Ref": "vRouter1Interface1"
+            },
+            "DeviceIndex": "0"
+          },
+          {
+            "NetworkInterfaceId": {
+              "Ref": "vRouter1Interface2"
+            },
+            "DeviceIndex": "1"
+          }
+        ],
+        "ImageId": {
+          "Fn::FindInMap": [
+            "vRAMI",
+            { "Ref": "AWS::Region" },
+            { "Ref": "vRVers" }
+          ]
+        }
+      }
+    },
+
+    "vR1RecoveryAlarm": {
+      "DependsOn": "vRouter1",
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "EC2 Autorecovery for vRouter 1. Autorecover if we fail EC2 status checks for 15 minutes.",
+        "Namespace": "AWS/EC2",
+        "MetricName": "StatusCheckFailed_System",
+        "Statistic": "Minimum",
+        "Period": "60",
+        "EvaluationPeriods": "15",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Threshold": "0",
+        "AlarmActions": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:automate:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":ec2:recover"
+              ]
+            ]
+          }
+        ],
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": {
+              "Ref": "vRouter1"
+            }
+          }
+        ]
+      }
+    },
+    
+    "vRouter2": {
+      "Type": "AWS::EC2::Instance",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "IamInstanceProfile": { "Ref": "vRouterInstanceIAMProfile"},
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vRouter2" ] ] }
+          }
+        ],
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "NetworkInterfaces": [
+          {
+            "NetworkInterfaceId": {
+              "Ref": "vRouter2Interface1"
+            },
+            "DeviceIndex": "0"
+          },
+          {
+            "NetworkInterfaceId": {
+              "Ref": "vRouter2Interface2"
+            },
+            "DeviceIndex": "1"
+          }
+        ],
+        "ImageId": {
+          "Fn::FindInMap": [
+            "vRAMI",
+            { "Ref": "AWS::Region" },
+            { "Ref": "vRVers" }
+          ]
+        }
+      }
+    },
+
+    "vR2RecoveryAlarm": {
+      "DependsOn": "vRouter2",
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "EC2 Autorecovery for vRouter 2. Autorecover if we fail EC2 status checks for 15 minutes.",
+        "Namespace": "AWS/EC2",
+        "MetricName": "StatusCheckFailed_System",
+        "Statistic": "Minimum",
+        "Period": "60",
+        "EvaluationPeriods": "15",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Threshold": "0",
+        "AlarmActions": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:automate:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":ec2:recover"
+              ]
+            ]
+          }
+        ],
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": {
+              "Ref": "vRouter2"
+            }
+          }
+        ]
+      }
+    },
+    
+		"PrivateSubnetRouteTable1": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub1RT" ] ] }
+          }
+				]
+			}
+		},
+
+		"PrivateSubnetRoute1": {
+      "DependsOn": "vRouter1",
+			"Type": "AWS::EC2::Route",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PrivateSubnetRouteTable1"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+        "NetworkInterfaceId": {
+              "Ref": "vRouter1Interface2"
+				}
+			}
+		},
+
+    "PrivateSubnetRouteTableAssociation1": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateSubnetRouteTable1"
+        }
+      }
+    },
+
+		"PrivateSubnetRouteTable2": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub2RT" ] ] }
+          }
+				]
+			}
+		},
+
+		"PrivateSubnetRoute2": {
+      "DependsOn": "vRouter2",
+			"Type": "AWS::EC2::Route",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PrivateSubnetRouteTable2"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+        "NetworkInterfaceId": {
+              "Ref": "vRouter2Interface2"
+				}
+			}
+		},
+
+    "PrivateSubnetRouteTableAssociation2": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateSubnetRouteTable2"
+        }
+      }
+    }
+
+	
+	},
+
+	"Outputs": {
+
+		"StackID": {
+			"Description": "Stack Id",
+			"Value": {
+					"Ref": "AWS::StackId"
+			}
+		},
+
+		"VPCID": {
+			"Description": "VPC Id",
+			"Value": {
+					"Ref": "VPC"
+			}
+		},
+
+		"Region": {
+			"Description": "Region",
+			"Value": {
+					"Ref": "AWS::Region"
+			}
+		},
+
+		"vR1PubIP": {
+			"Description": "vRouter 1 Public IP",
+			"Value": {
+					"Ref": "vRouter1EIP"
+			}
+		},
+
+		"vR2PubIP": {
+			"Description": "vRouter 2 Public IP",
+			"Value": {
+					"Ref": "vRouter2EIP"
+			}
+		},
+
+    "PrivateRouteTable1": {
+      "Description": "Private Route Table 1 ID",
+      "Value": {
+        "Ref": "PrivateSubnetRouteTable1"
+      }
+    },
+
+    "vRouter1Int2": {
+      "Description": "vRouter1 internal interface ID",
+      "Value": {
+        "Ref": "vRouter1Interface2"
+      }
+    },
+
+		"vR1PriIP2": {
+			"Description": "vRouter 1 Private IP 2",
+			"Value": {
+					"Fn::GetAtt": [ "vRouter1Interface2", "PrimaryPrivateIpAddress" ]
+			}
+		},
+
+    "PrivateRouteTable2": {
+      "Description": "Private Route Table 2 ID",
+      "Value": {
+        "Ref": "PrivateSubnetRouteTable2"
+      }
+    },
+    
+    "vRouter2Int2": {
+      "Description": "vRouter2 internal interface ID",
+      "Value": {
+        "Ref": "vRouter2Interface2"
+      }
+    },
+
+		"vR2PriIP2": {
+			"Description": "vRouter 2 Private IP 2",
+			"Value": {
+					"Fn::GetAtt": [ "vRouter2Interface2", "PrimaryPrivateIpAddress" ]
+			}
+		}
+
+	}
+ 
+}
