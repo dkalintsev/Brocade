@@ -691,10 +691,8 @@
           "RunCommands" : {
             "commands" : {
 
-              "01-capture_some_of_my_vars" : {
-                "command" : { "Fn::Join" : ["", [
-                  "curl http://169.254.169.254/latest/meta-data/public-hostname -o /tmp/test1.txt 2>&1"
-                ]]}
+              "01-dev_mode_accept" : {
+                "command" : "echo \"developer_mode_accepted     yes\" >> /opt/zeus/zxtm/global.cfg"
               },
 
               "02-stack_vars" : {
@@ -707,7 +705,7 @@
                   ]]}
               },
 
-              "03-wait_3_mins_then_signal_that_we_are_done" : {
+              "99-wait_3_mins_then_signal_that_we_are_done" : {
                 "command" : { "Fn::Join" : ["", [
                   "sleep 180 && /usr/local/bin/cfn-signal -s true '",
                   { "Ref" : "WaitHandle01" },
@@ -819,6 +817,30 @@
     "vADC2": {
       "Type": "AWS::EC2::Instance",
       "DependsOn": "WaitCondition01",
+
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "configSets" : {
+            "default" : [ "RunCommands" ]
+          },
+
+          "RunCommands" : {
+            "commands" : {
+
+              "01-dev_mode_accept" : {
+                "command" : "echo \"developer_mode_accepted     yes\" >> /opt/zeus/zxtm/global.cfg"
+              },
+
+              "02-replicate_updated_config" : {
+                "command" : "sleep 30 && /opt/zeus/zxtm/bin/replicate-config"
+              }
+
+            }
+          }
+        }
+      },
+
+
       "Properties": {
         "IamInstanceProfile": { "Ref": "vADCInstanceIAMProfile"},
         "Tags": [
@@ -840,7 +862,13 @@
           " cluster_host=",
             { "Fn::GetAtt" : [ "vADC1Interface1", "PrimaryPrivateIpAddress" ] },
           " cluster_fingerprint=unsafe",
-          " join_tips=y"
+          " join_tips=y",
+          " cfn_stack=",
+            { "Ref" : "AWS::StackName" },
+          " cfn_resource=",
+            "vADC2",
+          " cfn_region=",
+            { "Ref" : "AWS::Region" }
         ]]}},
         "NetworkInterfaces": [
           {
