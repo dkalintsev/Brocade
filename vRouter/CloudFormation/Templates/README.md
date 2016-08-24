@@ -48,6 +48,3 @@ The template has been tested and seems to work well, but you should not treat it
 You can deploy this template directly through AWS console or CLI. All inputs are fairly clearly labelled, and should present no trouble. Once the deployment is complete, connect to your new vRouter instances, and configure them accordingly.
 
 By default, only one interface, the one connected to the public subnet, will be configured. It will have its IP address assigned by DHCP. The second interface, connected to the private subnet, will have no IP address, and you will need to set it manually to the private IP assigned by AWS. You can find that private IP address for both vRouter instances in the stack Outputs under "vRouter 1 Private IP 2" / "vRouter 2 Private IP 2", respectively.
-
-Click the button to deploy the stack now into us-east-1:
-[![Deploy Stack](http://cdn.amazonblogs.com/application-management_awsblog/images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=vRouter-HA&templateURL=https://github.com/dkalintsev/Brocade/blob/master/vRouter/CloudFormation/Templates/vRouter-Deploy.template)
