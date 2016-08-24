@@ -670,20 +670,9 @@
 
           "CreateFiles" : {
             "files" : {
-              "/tmp/test0.txt" : {
-                "content" : { "Fn::Join" : [ "", [
-                  "Check out how to deal with Mustache template files here:\n",
-                  "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html\n"
-                ]]},
-                "mode"  : "000644",
-                "owner" : "root"
-              },
-              "/tmp/blah-template" : {
-                "source" : "https://s3.amazonaws.com/quickstart-reference/aws/vpc/latest/templates/aws-vpc.template"
-              },
-              "/tmp/test9.txt" : {
+              "/tmp/test.txt" : {
                 "content" : "Content for {{name}}",
-                "context" : { "name" : "test9" }
+                "context" : { "name" : "test" }
               }
             }
           },
@@ -693,16 +682,6 @@
 
               "01-dev_mode_accept" : {
                 "command" : "echo \"developer_mode_accepted     yes\" >> /opt/zeus/zxtm/global.cfg"
-              },
-
-              "02-stack_vars" : {
-                "command" : { "Fn::Join" : ["", [
-                    "echo 'vADC1EIP is: ",
-                    { "Ref" : "vADC1EIP" },
-                    ", and my private IP is: ",
-                    { "Fn::GetAtt" : [ "vADC1Interface1", "PrimaryPrivateIpAddress" ] },
-                    "' >> /tmp/test2.txt"
-                  ]]}
               },
 
               "99-wait_3_mins_then_signal_that_we_are_done" : {
