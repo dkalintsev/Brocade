@@ -2,7 +2,7 @@
 
 This is an example AWS CloudFormation template for deplopying a cluster of Brocade vADC virtual appliances into a VPC spanning two Availability Zones.
 
-The purpose of this template is to provide a starting point for deployment automation of applications that incorporate Brocade vADC. There are many opportunities for improvament, and I'll be testing and incorporating them over time.
+The purpose of this template is to provide a starting point for deployment automation of applications that incorporate Brocade vADC. There are many opportunities for improvement, and I'll be testing and incorporating them over time.
 
 On the near-term to-do list are:
 - Port to use Autoscale Groups
@@ -23,7 +23,7 @@ As it stands now, it does the following:
 
 1. Collects the deployment parameters:
   1. The IP subnets it needs to build a new VPC with 2 x AZs and 2 x subnets in each - one public and one private (4 x subnets in total);
-  2. vADC AMI version, appliance size, SSH key name, and admin password;
+  2. vADC version, appliance size, SSH key name, and admin password;
   3. The subnet or an IP that will be allowed SSH access to the vADC appliances;
 2. Creates the following resources:
   1. A VPC
