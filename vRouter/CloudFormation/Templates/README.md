@@ -49,6 +49,6 @@ You can deploy this template directly through AWS console or CLI. All inputs are
 
 By default, only one interface, the one connected to the public subnet, will be configured. It will have its IP address assigned by DHCP. The second interface, connected to the private subnet, will have no IP address, and you will need to set it manually to the private IP assigned by AWS. You can find that private IP address for both vRouter instances in the stack Outputs under "vRouter 1 Private IP 2" / "vRouter 2 Private IP 2", respectively.
 
-<a href=
+You can also launch this template into us-east-1 region by clicking <a href=
 https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vRouter&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vRouter/CloudFormation/Templates/vRouter-Deploy.template>
 <img src=https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png></a>
