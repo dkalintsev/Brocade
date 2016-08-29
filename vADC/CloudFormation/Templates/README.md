@@ -46,5 +46,5 @@ The template has been tested and seems to work well, but you should not treat it
 You can deploy this template directly through AWS console or CLI. All inputs are fairly clearly labelled, and should hopefully present no trouble. Once the deployment is complete, connect to your new vADC cluster on the URL in the Output, and login as admin with the password that you've supplied, or "Password123" if you accepted the default. Your cluster should be ready to take your application-specific configuration.
 
 <a href=
-https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vADC&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vADC/CloudFormation/Templates/vADC-Deploy-cfn-init.template>Deploy Stack
+https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vADC&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vADC/CloudFormation/Templates/vADC-Deploy-cfn-init.template>
 <img src=https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png></a>
