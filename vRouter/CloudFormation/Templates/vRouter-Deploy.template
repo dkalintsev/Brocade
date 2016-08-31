@@ -1,35 +1,55 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
 
-  "Description" : "AWS CloudFormation Template to deploy a Brocade vRouter 5600 into a new VPC. The AMI is chosen based on the region in which the stack is run. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Description" : "AWS CloudFormation Template to deploy a Brocade vRouter 5600 into a new VPC. **WARNING** This template creates Amazon EC2 instance(s). You will be billed for the AWS resources used if you create a stack from this template.",
 
 	"Metadata" : {
 		"AWS::CloudFormation::Interface" : {
 			"ParameterGroups" : [
 				{
-					"Label" : { "default" : "VPC Configuration" },
-					"Parameters" : [ "AZs", "VPCCIDR", "PublicSubnetCIDR1", "PrivateSubnetCIDR1", "PublicSubnetCIDR2", "PrivateSubnetCIDR2" ]
-				},
-
-				{
-					"Label" : { "default" : "vRouter Configuration" },
-					"Parameters" : [ "vRVers", "InstanceType", "KeyName" ]
-				},
+					"Label" : { "default" : "AZ and vRouter Configuration" },
+          "Parameters": [
+            "AZs",
+            "NumberOfAZs",
+            "NumberOfvRs",
+            "vRVers",
+            "InstanceType",
+            "KeyName"
+          ]
+        },
+        
+        {
+          "Label" : { "default" : "Network Configuration" },
+          "Parameters": [
+            "VPCCIDR",
+            "PublicSubnetCIDR1",
+            "PublicSubnetCIDR2",
+            "PublicSubnetCIDR3",
+            "PrivateSubnetCIDR1",
+            "PrivateSubnetCIDR2",
+            "PrivateSubnetCIDR3"
+          ]
+        },
+                
 				{
 					"Label" : { "default" : "Security Configuration" },
 					"Parameters" : [ "RemoteAccessCIDR" ]
 				}
 			],
 			"ParameterLabels" : {
+				"AZs" : { "default" : "Availability Zones:" },
+				"NumberOfAZs" : { "default" : "Number of Availability Zones:" },
+				"NumberOfvRs" : { "default" : "Number of vRouters to deploy:" },
+				"vRVers" : { "default" : "vRouter Version:" },
+				"InstanceType" : { "default" : "vRouter instance type:" },
+				"KeyName" : { "default" : "SSH Key Name:" },
 				"VPCCIDR" : { "default" : "New VPC CIDR Block:" },
 				"PublicSubnetCIDR1" : { "default" : "Public Subnet 1:" },
 				"PublicSubnetCIDR2" : { "default" : "Public Subnet 2:" },
+				"PublicSubnetCIDR3" : { "default" : "Public Subnet 3:" },
 				"PrivateSubnetCIDR1" : { "default" : "Private Subnet 1:" },
 				"PrivateSubnetCIDR2" : { "default" : "Private Subnet 2:" },
-				"InstanceType" : { "default" : "vRouter instance type:" },
-				"vRVers" : { "default" : "vRouter Version:" },
-				"KeyName" : { "default" : "SSH Key Name:" },
-				"AZs" : { "default" : "Select two Availability Zones:" },
+				"PrivateSubnetCIDR3" : { "default" : "Private Subnet 3:" },
 				"RemoteAccessCIDR" : { "default" : "Remote Access CIDR:" }
 				
 			}
@@ -37,18 +57,32 @@
 	},
 
 	"Parameters": {
-		"InstanceType": {
-			"Description": "Please select a vRouter EC2 instance type",
-			"Type": "String",
-			"Default": "m4.large",
-			"AllowedValues": [
-				"m4.large",
-				"m4.xlarge",
-				"m4.2xlarge",
-				"m4.4xlarge"
-			],
-			"ConstraintDescription": "Must be an allowed EC2 instance type."
-		},
+    "AZs": {
+      "Description": "List of Availability Zones where Private and Public subnet pairs will be created. Please select two or three.",
+      "Type": "List<AWS::EC2::AvailabilityZone::Name>",
+      "ConstraintDescription": "Please select at least one AZ from the drop-down list."            
+    },
+
+    "NumberOfAZs": {
+      "AllowedValues": [
+        "2",
+        "3"
+      ],
+      "Default": "2",
+      "Description": "Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter above.",
+      "Type": "String"
+    },
+    
+    "NumberOfvRs": {
+      "AllowedValues": [
+        "1",
+        "2",
+        "3"
+      ],
+      "Default": "2",
+      "Description": "Number of vRouters to deploy; must be equal to or less than the number of selected Availability Zones. When you select fewer vRouters than AZs, private subnets that don't have their own vRouter will use vRouter 1.",
+      "Type": "String"
+    },
 
     "vRVers" : {
       "Description" : "Please select vRouter version. Note not all vRouter versions are available in all regions, and some older versions may not be available, too.",
@@ -63,21 +97,24 @@
       "ConstraintDescription" : "Must be a valid vRouter version"
     },
 
+		"InstanceType": {
+			"Description": "Please select a vRouter EC2 instance type",
+			"Type": "String",
+			"Default": "m4.large",
+			"AllowedValues": [
+				"m4.large",
+				"m4.xlarge",
+				"m4.2xlarge",
+				"m4.4xlarge"
+			],
+			"ConstraintDescription": "Must be an allowed EC2 instance type."
+		},
+
 		"KeyName": {
 			"Type": "AWS::EC2::KeyPair::KeyName",
 			"Default": "",
 			"Description": "Name of an existing EC2 KeyPair. Your vRouter will launch with this KeyPair.",
       "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
-		},
-
-		"RemoteAccessCIDR": {
-			"Description": "Allowed source IP address range for SSH access into vRouter",
-			"Type": "String",
-			"MinLength": "9",
-			"MaxLength": "18",
-			"Default": "0.0.0.0/0",
-      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
 		},
 
 		"VPCCIDR": {
@@ -87,15 +124,9 @@
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
 			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
 		},
-
-    "AZs": {
-      "Description": "List of Availability Zones where Private and Public subnet pairs will be created. Please select two.",
-      "Type": "List<AWS::EC2::AvailabilityZone::Name>",
-      "ConstraintDescription": "Please select an AZ from a drop-down list."            
-    },
-
+    
 		"PublicSubnetCIDR1": {
-			"Description": "vRouter 1 will have one interface in this public subnet.",
+			"Description": "Public subnet located in AZ 1.",
 			"Type": "String",
 			"Default": "10.8.1.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
@@ -103,25 +134,51 @@
 		},
 
 		"PublicSubnetCIDR2": {
-			"Description": "vRouter 2 will have one interface in this public subnet.",
+			"Description": "Public subnet located in AZ 2.",
 			"Type": "String",
 			"Default": "10.8.2.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
 			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
 		},
 
-		"PrivateSubnetCIDR1": {
-			"Description": "vRouter 1 will have its second interface in this private subnet. Your EC2 instances in this VPC will use it as their gateway.",
+		"PublicSubnetCIDR3": {
+			"Description": "Public subnet located in AZ 3.",
 			"Type": "String",
 			"Default": "10.8.3.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
 			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
 		},
-		
-		"PrivateSubnetCIDR2": {
-			"Description": "vRouter 2 will have its second interface in this private subnet. Your EC2 instances in this VPC will use it as their gateway.",
+
+		"PrivateSubnetCIDR1": {
+			"Description": "Private subnet located in AZ 1.",
 			"Type": "String",
 			"Default": "10.8.4.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+		
+		"PrivateSubnetCIDR2": {
+			"Description": "Private subnet located in AZ 2.",
+			"Type": "String",
+			"Default": "10.8.5.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+
+		"PrivateSubnetCIDR3": {
+			"Description": "Private subnet located in AZ 3.",
+			"Type": "String",
+			"Default": "10.8.6.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+		},
+
+		"RemoteAccessCIDR": {
+			"Description": "Allowed source IP address range for SSH access into vRouter",
+			"Type": "String",
+			"MinLength": "9",
+			"MaxLength": "18",
+			"Default": "0.0.0.0/0",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
 			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
 		}
@@ -159,7 +216,58 @@
   },
 
 	"Conditions" : {
-	},
+    "2AZCondition": {
+      "Fn::Or": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "NumberOfAZs"
+            },
+            "2"
+          ]
+        },
+        {
+          "Condition": "3AZCondition"
+        }
+      ]
+    },
+    
+    "3AZCondition": {
+      "Fn::Equals": [
+        {
+          "Ref": "NumberOfAZs"
+        },
+        "3"
+      ]
+    },
+
+    "2vRCondition": {
+      "Fn::Or": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "NumberOfvRs"
+            },
+            "2"
+          ]
+        },
+        {
+          "Condition": "3vRCondition"
+        }
+      ]
+    },
+
+    "3vRCondition": {
+      
+      "Fn::Equals": [
+        {
+          "Ref": "NumberOfvRs"
+        },
+        "3"
+      ]
+    }
+  },
+  
 	
 	"Resources": {
 
@@ -205,6 +313,7 @@
 		},
 
 		"PublicSubnet2": {
+      "Condition": "2AZCondition",
 			"Type": "AWS::EC2::Subnet",
 			"Properties": {
 				"VpcId": {
@@ -220,6 +329,27 @@
 				],
 				"AvailabilityZone": {
           "Fn::Select": [ "1", { "Ref": "AZs" } ]
+				}
+			}
+		},
+
+		"PublicSubnet3": {
+      "Condition": "3AZCondition",
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": {
+					"Ref": "PublicSubnetCIDR3"
+				},
+				"Tags": [
+          { "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSub3" ] ] }
+					}
+				],
+				"AvailabilityZone": {
+          "Fn::Select": [ "2", { "Ref": "AZs" } ]
 				}
 			}
 		},
@@ -246,6 +376,7 @@
 		},
 
 		"PrivateSubnet2": {
+      "Condition": "2AZCondition",
 			"Type": "AWS::EC2::Subnet",
 			"Properties": {
 				"VpcId": {
@@ -262,6 +393,28 @@
 				],
 				"AvailabilityZone": {
           "Fn::Select": [ "1", { "Ref": "AZs" } ]
+				}
+			}
+		},
+
+		"PrivateSubnet3": {
+      "Condition": "3AZCondition",
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": {
+					"Ref": "PrivateSubnetCIDR3"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub3" ] ] }
+					}
+				],
+				"AvailabilityZone": {
+          "Fn::Select": [ "2", { "Ref": "AZs" } ]
 				}
 			}
 		},
@@ -334,10 +487,24 @@
     },
 
     "PublicSubnet2RouteTableAssociation": {
+      "Condition": "2AZCondition",
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
       "Properties": {
         "SubnetId": {
           "Ref": "PublicSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        }
+      }
+    },
+
+    "PublicSubnet3RouteTableAssociation": {
+      "Condition": "3AZCondition",
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet3"
         },
         "RouteTableId": {
           "Ref": "PublicSubnetRouteTable"
@@ -430,6 +597,16 @@
     },
 
     "vRouter2EIP": {
+      "Condition": "2vRCondition",
+      "Type": "AWS::EC2::EIP",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+    "vRouter3EIP": {
+      "Condition": "3vRCondition",
       "Type": "AWS::EC2::EIP",
       "DependsOn": "AttachGateway",
       "Properties": {
@@ -464,6 +641,7 @@
     },
 
     "vRouter2Interface1": {
+      "Condition": "2vRCondition",
       "Type": "AWS::EC2::NetworkInterface",
       "Properties": {
         "SubnetId": {
@@ -480,6 +658,33 @@
           {
 						"Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vR2PubInt" ] ] }
+          },
+          {
+            "Key": "Network",
+            "Value": "Public"
+          }
+        ]
+      }
+    },
+
+    "vRouter3Interface1": {
+      "Condition": "3vRCondition",
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet3"
+        },
+        "Description": "External interface for the vRouter 3",
+        "GroupSet": [
+          {
+            "Ref": "NATSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vR3PubInt" ] ] }
           },
           {
             "Key": "Network",
@@ -516,6 +721,7 @@
     },
 
     "vRouter2Interface2": {
+      "Condition": "2vRCondition",
       "Type": "AWS::EC2::NetworkInterface",
       "Properties": {
         "SubnetId": {
@@ -541,6 +747,33 @@
       }
     },
 
+    "vRouter3Interface2": {
+      "Condition": "3vRCondition",
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet3"
+        },
+        "Description": "Internal interface for the vRouter 3",
+        "GroupSet": [
+          {
+            "Ref": "NATSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vR3PriInt" ] ] }
+          },
+          {
+            "Key": "Network",
+            "Value": "Private"
+          }
+        ]
+      }
+    },
+
     "AssociatevRouter1Interface": {
       "Type": "AWS::EC2::EIPAssociation",
       "Properties": {
@@ -557,6 +790,7 @@
     },
 
     "AssociatevRouter2Interface": {
+      "Condition": "2vRCondition",
       "Type": "AWS::EC2::EIPAssociation",
       "Properties": {
         "AllocationId": {
@@ -567,6 +801,22 @@
         },
         "NetworkInterfaceId": {
           "Ref": "vRouter2Interface1"
+        }
+      }
+    },
+
+    "AssociatevRouter3Interface": {
+      "Condition": "3vRCondition",
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "vRouter3EIP",
+            "AllocationId"
+          ]
+        },
+        "NetworkInterfaceId": {
+          "Ref": "vRouter3Interface1"
         }
       }
     },
@@ -603,7 +853,8 @@
                     "ec2:DescribeVpcs",
                     "ec2:ReplaceRoute",
                     "ec2:DisassociateRouteTable",
-                    "ec2:ReplaceRouteTableAssociation"                                ],
+                    "ec2:ReplaceRouteTableAssociation"
+                  ],
                   "Resource": "*"
                 }
               ]
@@ -624,7 +875,6 @@
         ]
       }
     },
-
 
     "vRouter1": {
       "Type": "AWS::EC2::Instance",
@@ -705,6 +955,7 @@
     },
     
     "vRouter2": {
+      "Condition": "2vRCondition",
       "Type": "AWS::EC2::Instance",
       "DependsOn": "AttachGateway",
       "Properties": {
@@ -746,6 +997,7 @@
     },
 
     "vR2RecoveryAlarm": {
+      "Condition": "2vRCondition",
       "DependsOn": "vRouter2",
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
@@ -782,6 +1034,86 @@
       }
     },
     
+    "vRouter3": {
+      "Condition": "3vRCondition",
+      "Type": "AWS::EC2::Instance",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "IamInstanceProfile": { "Ref": "vRouterInstanceIAMProfile"},
+        "Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vRouter3" ] ] }
+          }
+        ],
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "NetworkInterfaces": [
+          {
+            "NetworkInterfaceId": {
+              "Ref": "vRouter3Interface1"
+            },
+            "DeviceIndex": "0"
+          },
+          {
+            "NetworkInterfaceId": {
+              "Ref": "vRouter3Interface2"
+            },
+            "DeviceIndex": "1"
+          }
+        ],
+        "ImageId": {
+          "Fn::FindInMap": [
+            "vRAMI",
+            { "Ref": "AWS::Region" },
+            { "Ref": "vRVers" }
+          ]
+        }
+      }
+    },
+
+    "vR3RecoveryAlarm": {
+      "Condition": "3vRCondition",
+      "DependsOn": "vRouter3",
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "EC2 Autorecovery for vRouter 3. Autorecover if we fail EC2 status checks for 15 minutes.",
+        "Namespace": "AWS/EC2",
+        "MetricName": "StatusCheckFailed_System",
+        "Statistic": "Minimum",
+        "Period": "60",
+        "EvaluationPeriods": "15",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Threshold": "0",
+        "AlarmActions": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:automate:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":ec2:recover"
+              ]
+            ]
+          }
+        ],
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": {
+              "Ref": "vRouter3"
+            }
+          }
+        ]
+      }
+    },
+
 		"PrivateSubnetRouteTable1": {
 			"Type": "AWS::EC2::RouteTable",
 			"Properties": {
@@ -824,6 +1156,7 @@
     },
 
 		"PrivateSubnetRouteTable2": {
+      "Condition": "2AZCondition",
 			"Type": "AWS::EC2::RouteTable",
 			"Properties": {
 				"VpcId": {
@@ -839,7 +1172,7 @@
 		},
 
 		"PrivateSubnetRoute2": {
-      "DependsOn": "vRouter2",
+      "Condition": "2AZCondition",
 			"Type": "AWS::EC2::Route",
 			"Properties": {
 				"RouteTableId": {
@@ -847,12 +1180,17 @@
 				},
 				"DestinationCidrBlock": "0.0.0.0/0",
         "NetworkInterfaceId": {
-              "Ref": "vRouter2Interface2"
+          "Fn::If" : [
+            "2vRCondition",
+            { "Ref": "vRouter2Interface2" },
+            { "Ref": "vRouter1Interface2" }
+          ]
 				}
 			}
 		},
 
     "PrivateSubnetRouteTableAssociation2": {
+      "Condition": "2AZCondition",
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
       "Properties": {
         "SubnetId": {
@@ -862,6 +1200,53 @@
           "Ref": "PrivateSubnetRouteTable2"
         }
       }
+    },
+
+		"PrivateSubnetRouteTable3": {
+      "Condition": "3AZCondition",
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [
+          {
+						"Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub3RT" ] ] }
+          }
+				]
+			}
+		},
+
+		"PrivateSubnetRoute3": {
+      "Condition": "3AZCondition",
+			"Type": "AWS::EC2::Route",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PrivateSubnetRouteTable3"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+        "NetworkInterfaceId": {
+          "Fn::If" : [
+            "3vRCondition",
+            { "Ref": "vRouter3Interface2" },
+            { "Ref": "vRouter1Interface2" }
+          ]
+				}
+			}
+		},
+
+    "PrivateSubnetRouteTableAssociation3": {
+      "Condition": "3AZCondition",
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet3"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateSubnetRouteTable3"
+        }
+      }
     }
 
 	
@@ -869,10 +1254,10 @@
 
 	"Outputs": {
 
-		"StackID": {
-			"Description": "Stack Id",
+		"StackName": {
+			"Description": "Stack Name",
 			"Value": {
-					"Ref": "AWS::StackId"
+					"Ref": "AWS::StackName"
 			}
 		},
 
@@ -898,9 +1283,18 @@
 		},
 
 		"vR2PubIP": {
+      "Condition": "2vRCondition",
 			"Description": "vRouter 2 Public IP",
 			"Value": {
 					"Ref": "vRouter2EIP"
+			}
+		},
+
+		"vR3PubIP": {
+      "Condition": "3vRCondition",
+			"Description": "vRouter 3 Public IP",
+			"Value": {
+					"Ref": "vRouter3EIP"
 			}
 		},
 
@@ -926,6 +1320,7 @@
 		},
 
     "PrivateRouteTable2": {
+      "Condition": "2AZCondition",
       "Description": "Private Route Table 2 ID",
       "Value": {
         "Ref": "PrivateSubnetRouteTable2"
@@ -933,6 +1328,7 @@
     },
     
     "vRouter2Int2": {
+      "Condition": "2vRCondition",
       "Description": "vRouter2 internal interface ID",
       "Value": {
         "Ref": "vRouter2Interface2"
@@ -940,9 +1336,34 @@
     },
 
 		"vR2PriIP2": {
+      "Condition": "2vRCondition",
 			"Description": "vRouter 2 Private IP 2",
 			"Value": {
 					"Fn::GetAtt": [ "vRouter2Interface2", "PrimaryPrivateIpAddress" ]
+			}
+		},
+
+    "PrivateRouteTable3": {
+      "Condition": "3AZCondition",
+      "Description": "Private Route Table 3 ID",
+      "Value": {
+        "Ref": "PrivateSubnetRouteTable3"
+      }
+    },
+    
+    "vRouter3Int2": {
+      "Condition": "3vRCondition",
+      "Description": "vRouter3 internal interface ID",
+      "Value": {
+        "Ref": "vRouter3Interface2"
+      }
+    },
+
+		"vR3PriIP2": {
+      "Condition": "3vRCondition",
+			"Description": "vRouter 3 Private IP 2",
+			"Value": {
+					"Fn::GetAtt": [ "vRouter3Interface2", "PrimaryPrivateIpAddress" ]
 			}
 		}
 
