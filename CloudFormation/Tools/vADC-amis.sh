@@ -1,5 +1,46 @@
 #!/bin/bash
 
+#
+# Variables
+#
+# Pattern to match when querying AWS for vRouter AMIs
+#
+vADCAMI='*stingray-traffic-manager-*'
+#
+# Pattern to match the vADC AMI SKU Type; "STM-DEV" by default.
+# At the time of writing, I can see the following SKUs:
+#
+# STM-DEV
+# STM-CSUB-4000-L-SAF-64-bw
+# STM-CSUB-4000-L-64-bw-5gbps
+# STM-CSUB-2000-L-SAF-STX-64
+# STM-CSUB-2000-L-SAF-64-bw
+# STM-CSUB-2000-L-64-bw-1gbps
+# STM-CSUB-1000-M-SAF-STX-64
+# STM-CSUB-1000-M-SAF-64-bw
+# STM-CSUB-1000-M-64-bw-200mbps
+# STM-CSUB-1000-L-SAF-64-bw
+# STM-CSUB-1000-L-64-bw-10mbps
+# STM-CSUB-1000-H-SAF-64-bw
+# STM-CSUB-1000-H-64-bw-1gbps
+# STM-CSP-500-M1-64-bw-300mbps
+# STM-CSP-500-L-64-bw-10mbps
+# STM-CSP-500-L2-64-bw-100mbps
+# SAFPX-CSUB
+#
+SKU='STM-DEV'
+#
+# There may be many versions available; how many freshest ones to include?
+# 
+# I'm specifying a number that's larger than the number of available versions,
+# because simple trimming leaves in versions that are "no longer available",
+# in Marketplace, while leaving out those that actually are. Please see Q&A
+# section in the README file for the vADC template that uses output from this
+# script for more info:
+# https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/README.md
+# 
+Versions='15'
+#
 OPTIND=1
 force=0
 
@@ -43,11 +84,11 @@ for i in $(seq 0 $pos); do
 	if [[ -a "$fn" ]]; then
 		echo "Cached contents found for this region; re-run this script as \"$0 -f\" to force update."
 	else
-		aws --region $reg ec2 describe-images --owners 679593333241 --filters Name=name,Values='*stingray-traffic-manager-*' | awk -F "\"" ' /"Name"/ { printf "%s:", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | grep STM-DEV | sed -e "s/ger-/ger:/g" -e "s/-x86/:x86/g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
+		aws --region $reg ec2 describe-images --owners aws-marketplace --filters Name=name,Values="$vADCAMI" | awk -F "\"" ' /"Name"/ { printf "%s:", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | grep "$SKU" | sed -e "s/ger-/ger:/g" -e "s/-x86/:x86/g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
 	fi
 done
 
-versions=( $(cat vADC-amis_* | awk -F: '{print $1}' | sort -n | uniq) )
+versions=( $(cat vADC-amis_* | awk -F: '{print $1}' | sort -n | uniq | tail -"$Versions") )
 pos1=$(( ${#versions[*]} - 1 ))
 
 printf "\n\nCut and paste the output below into your CloudFormation template:\n"

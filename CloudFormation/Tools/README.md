@@ -16,6 +16,8 @@ Scripts do the following:
 - If there's no file for one or more regions, query AWS for the AMIs, and cache results
 - Once done with cache files, process them and produce the results.
 
+There are a couple parameters you can change that are located at the start of the scripts - one that defines the AMI string to use to look up the AMIs, and another how many versions to generate the output for. If you change the first one, you'll need to regenerate the cache, by re-running the script with the "-f" parameter. If you change the second one, your existing cache files, if any, are good - just re-run the script to generate the amended output.
+
 Scripts accept "-h|-?" for help, or "-f" to force re-creation of all cache files.
 
 If you need to re-build cache for particular region, just delete the cache file for that region. It should be fairly self-evident what region each cache file corresponds to.
@@ -57,7 +59,6 @@ Cut and paste the output below into your CloudFormation template:
       "Type" : "String",
       "Default" : "42R1B",
       "AllowedValues" : [
-        "40R1",
         "41R2B",
         "41R3B",
         "42R1B"
@@ -68,16 +69,16 @@ Cut and paste the output below into your CloudFormation template:
 
   "Mappings" : {
     "vRAMI" : {
-      "eu-west-1" : { "40R1" : "ami-43cd6830", "41R2B" : "ami-1e5efc6d", "41R3B" : "ami-e155d592", "42R1B" : "ami-6a59cf19" },
-      "ap-southeast-1" : { "40R1" : "ami-a3c203c0", "41R2B" : "ami-3769aa54", "41R3B" : "ami-97d207f4", "42R1B" : "ami-88ad7ceb" },
-      "ap-southeast-2" : { "40R1" : "ami-f26e3791", "41R2B" : "ami-cc8cd7af", "41R3B" : "ami-0b9fbc68", "42R1B" : "ami-c5ac83a6" },
-      "eu-central-1" : { "40R1" : "ami-eacad886", "41R2B" : "ami-10bba77c", "41R3B" : "ami-4114f52e", "42R1B" : "ami-3642ae59" },
+      "eu-west-1" : { "41R2B" : "ami-1e5efc6d", "41R3B" : "ami-e155d592", "42R1B" : "ami-6a59cf19" },
+      "ap-southeast-1" : { "41R2B" : "ami-3769aa54", "41R3B" : "ami-97d207f4", "42R1B" : "ami-88ad7ceb" },
+      "ap-southeast-2" : { "41R2B" : "ami-cc8cd7af", "41R3B" : "ami-0b9fbc68", "42R1B" : "ami-c5ac83a6" },
+      "eu-central-1" : { "41R2B" : "ami-10bba77c", "41R3B" : "ami-4114f52e", "42R1B" : "ami-3642ae59" },
       "ap-northeast-2" : { "41R2B" : "ami-7dad6313", "41R3B" : "ami-7d1ad313", "42R1B" : "ami-93a06bfd" },
-      "ap-northeast-1" : { "40R1" : "ami-df7351b1", "41R2B" : "ami-6100350f", "41R3B" : "ami-a7f2e2c9", "42R1B" : "ami-772ccf16" },
-      "us-east-1" : { "40R1" : "ami-dacf8bb0", "41R2B" : "ami-bfb7e3d5", "41R3B" : "ami-d79a8dbd", "42R1B" : "ami-e8bb4c85" },
-      "sa-east-1" : { "40R1" : "ami-0817ad64", "41R2B" : "ami-86b433ea", "41R3B" : "ami-5c63ec30", "42R1B" : "ami-143eb678" },
-      "us-west-1" : { "40R1" : "ami-1cd2bc7c", "41R2B" : "ami-dae18aba", "41R3B" : "ami-cd601cad", "42R1B" : "ami-342a5154" },
-      "us-west-2" : { "40R1" : "ami-bdddcddc", "41R2B" : "ami-84abb4e5", "41R3B" : "ami-7fb5411f", "42R1B" : "ami-32867852" }
+      "ap-northeast-1" : { "41R2B" : "ami-6100350f", "41R3B" : "ami-a7f2e2c9", "42R1B" : "ami-772ccf16" },
+      "us-east-1" : { "41R2B" : "ami-bfb7e3d5", "41R3B" : "ami-d79a8dbd", "42R1B" : "ami-e8bb4c85" },
+      "sa-east-1" : { "41R2B" : "ami-86b433ea", "41R3B" : "ami-5c63ec30", "42R1B" : "ami-143eb678" },
+      "us-west-1" : { "41R2B" : "ami-dae18aba", "41R3B" : "ami-cd601cad", "42R1B" : "ami-342a5154" },
+      "us-west-2" : { "41R2B" : "ami-84abb4e5", "41R3B" : "ami-7fb5411f", "42R1B" : "ami-32867852" }
     }
   }
 

@@ -12,7 +12,7 @@ On the near-ish term to-do list are:
 - Port to use Autoscale Groups
 - Functionality for vRouters to pull their configuration from a repository, tentatively GitHub (this has dependency on the upcoming cloud-init support)
 
-This template includes AMIs for vRouter versions available at the time of writing. Please see the [tools](https://github.com/dkalintsev/Brocade/tree/master/CloudFormation/Tools) directory for the vR-amis.sh script that you can use to generate a fresh set of AMIs when things change, like when new vRouter versions come out, or AWS adds more regions.
+This template includes AMIs for the three latest vRouter versions available at the time of writing. Please see the [tools](https://github.com/dkalintsev/Brocade/tree/master/CloudFormation/Tools) directory for the vR-amis.sh script that you can use to generate a fresh set of AMIs when things change, like when new vRouter versions come out, or AWS adds more regions.
 
 ## What does this template currently do
 
@@ -65,7 +65,7 @@ https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?
 
 ## Q&A
 
-**Q**: My deployment sits forever at *"CREATE\_IN\_PROGRESS"* of vRouter instances, then fails and rolls back. In the "Status reason" of CloudFormation "Events" log I see the message similar to *"In order to use this AWS Marketplace product you need to accept terms and subscribe. To do so please visit http://aws.amazon.com/marketplace/pp?sku=7of3sgnx2ow2c29618xcrp01v"* against vRouter1 AWS::EC2::Instance.  
+**Q**: My deployment sits forever at *"CREATE\_IN\_PROGRESS"* of vRouter instances, then fails and rolls back. In the "Status reason" of CloudFormation "Events" log I see a message similar to *"In order to use this AWS Marketplace product you need to accept terms and subscribe. To do so please visit http://aws.amazon.com/marketplace/pp?sku=7of3sgnx2ow2c29618xcrp01v"* against the vRouter1 AWS::EC2::Instance.  
 **A**: You haven't subscribed to Brocade vRouter software through the AWS Marketplace yet. Please visit the link CloudFormation has shown (which may be different from the one above), which will take you to the step #4 in the subscription instructions above the Q&A. Once subscribed, select "Delete Stack", and try deploying again.
 
 **Q**: I don't need the vRouter anymore. How can I cancel my subscription?  

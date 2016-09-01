@@ -1,5 +1,16 @@
 #!/bin/bash
 
+#
+# Variables
+#
+# Pattern to match when querying AWS for vRouter AMIs
+#
+vRAMI='*vyatta-ami_*'
+#
+# There may be many versions available; how many freshest ones to include?
+#
+Versions='3'
+#
 OPTIND=1
 force=0
 
@@ -43,11 +54,11 @@ for i in $(seq 0 $pos); do
 	if [[ -a "$fn" ]]; then
 		echo "Cached contents found for this region; re-run this script as \"$0 -f\" to force update."
 	else
-		aws --region $reg ec2 describe-images --owners 679593333241 --filters Name=name,Values='*vyatta-ami_4*' | awk -F "\"" ' /"Name"/ { printf "%s_", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | sed -e "s/ami_/ami:/g" -e "s/_amd/:amd/g" -e "s/_ami/:ami/g" -e "s/\.//g" -e "s/_//g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
+		aws --region $reg ec2 describe-images --owners aws-marketplace --filters Name=name,Values="$vRAMI" | awk -F "\"" ' /"Name"/ { printf "%s_", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | sed -e "s/ami_/ami:/g" -e "s/_amd/:amd/g" -e "s/_ami/:ami/g" -e "s/\.//g" -e "s/_//g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
 	fi
 done
 
-versions=( $(cat vRouter-amis_* | awk -F: '{print $1}' | sort -n | uniq) )
+versions=( $(cat vRouter-amis_* | awk -F: '{print $1}' | sort -n | uniq | tail -"$Versions") )
 pos1=$(( ${#versions[*]} - 1 ))
 
 printf "\n\nCut and paste the output below into your CloudFormation template:\n"
