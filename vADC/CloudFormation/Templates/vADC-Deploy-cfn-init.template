@@ -34,7 +34,7 @@
 				
 			}
 		}
-	},
+  },
 
 	"Parameters": {
 		"InstanceType": {
@@ -742,7 +742,7 @@
     },
 
     "vADC1RecoveryAlarm": {
-      "DependsOn": "AttachGateway",
+      "DependsOn": "vADC1",
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
         "AlarmDescription": "EC2 Autorecovery for vADC 1. Autorecover if we fail EC2 status checks for 15 minutes.",
