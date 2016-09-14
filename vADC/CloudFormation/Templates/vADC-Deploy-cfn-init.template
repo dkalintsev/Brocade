@@ -2,46 +2,46 @@
   "AWSTemplateFormatVersion" : "2010-09-09",
 
   "Description": "This AWS CloudFormation Template deploys a pair of Brocade vADCs into a new VPC. The AMI is chosen based on the region in which the stack is run. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template. In order to access the Brocade Virtual Traffic Manager please enter https://<public dns>:9090 into your web browser. For instructions on using this product, please visit: http://www.brocade.com/content/brocade/en/backend-content/pdf-page.html?/content/dam/common/documents/content-types/user-guide/brocade-vtm-11.0-cloud-gsg.pdf for the Cloud Services Installation and Getting Started Guide.", 
-	"Metadata" : {
-		"AWS::CloudFormation::Interface" : {
-			"ParameterGroups" : [
-				{
-					"Label" : { "default" : "VPC Configuration" },
-					"Parameters" : [ "AZs", "VPCCIDR", "PublicSubnetCIDR1", "PrivateSubnetCIDR1", "PublicSubnetCIDR2", "PrivateSubnetCIDR2" ]
-				},
+  "Metadata" : {
+    "AWS::CloudFormation::Interface" : {
+      "ParameterGroups" : [
+        {
+          "Label" : { "default" : "VPC Configuration" },
+          "Parameters" : [ "AZs", "VPCCIDR", "PublicSubnetCIDR1", "PrivateSubnetCIDR1", "PublicSubnetCIDR2", "PrivateSubnetCIDR2" ]
+        },
 
-				{
-					"Label" : { "default" : "vADC Configuration" },
-					"Parameters" : [ "vADCVers", "InstanceType", "KeyName", "AdminPass" ]
-				},
-				{
-					"Label" : { "default" : "Security Configuration" },
-					"Parameters" : [ "RemoteAccessCIDR" ]
-				}
-			],
-			"ParameterLabels" : {
-				"VPCCIDR" : { "default" : "New VPC CIDR Block:" },
-				"PublicSubnetCIDR1" : { "default" : "Public Subnet 1:" },
-				"PublicSubnetCIDR2" : { "default" : "Public Subnet 2:" },
-				"PrivateSubnetCIDR1" : { "default" : "Private Subnet 1:" },
-				"PrivateSubnetCIDR2" : { "default" : "Private Subnet 2:" },
-				"InstanceType" : { "default" : "vADC instance type:" },
-				"vADCVers" : { "default" : "vADC Version:" },
-				"KeyName" : { "default" : "SSH Key Name:" },
-				"AdminPass" : { "default" : "vADC admin user password:" },
-				"AZs" : { "default" : "Select two Availability Zones:" },
-				"RemoteAccessCIDR" : { "default" : "Remote Access CIDR:" }
-				
-			}
-		}
+        {
+          "Label" : { "default" : "vADC Configuration" },
+          "Parameters" : [ "vADCVers", "InstanceType", "KeyName", "AdminPass" ]
+        },
+        {
+          "Label" : { "default" : "Security Configuration" },
+          "Parameters" : [ "RemoteAccessCIDR" ]
+        }
+      ],
+      "ParameterLabels" : {
+        "VPCCIDR" : { "default" : "New VPC CIDR Block:" },
+        "PublicSubnetCIDR1" : { "default" : "Public Subnet 1:" },
+        "PublicSubnetCIDR2" : { "default" : "Public Subnet 2:" },
+        "PrivateSubnetCIDR1" : { "default" : "Private Subnet 1:" },
+        "PrivateSubnetCIDR2" : { "default" : "Private Subnet 2:" },
+        "InstanceType" : { "default" : "vADC instance type:" },
+        "vADCVers" : { "default" : "vADC Version:" },
+        "KeyName" : { "default" : "SSH Key Name:" },
+        "AdminPass" : { "default" : "vADC admin user password:" },
+        "AZs" : { "default" : "Select two Availability Zones:" },
+        "RemoteAccessCIDR" : { "default" : "Remote Access CIDR:" }
+        
+      }
+    }
   },
 
-	"Parameters": {
-		"InstanceType": {
-			"Description": "Please select a vADC EC2 instance type",
-			"Type": "String",
-			"Default": "m4.large",
-			"AllowedValues": [
+  "Parameters": {
+    "InstanceType": {
+      "Description": "Please select a vADC EC2 instance type",
+      "Type": "String",
+      "Default": "m4.large",
+      "AllowedValues": [
         "t2.small",
         "t2.medium",
         "t2.large",
@@ -69,9 +69,9 @@
         "r3.2xlarge",
         "r3.4xlarge",
         "r3.8xlarge"
-			],
-			"ConstraintDescription": "Must be an allowed EC2 instance type."
-		},
+      ],
+      "ConstraintDescription": "Must be an allowed EC2 instance type."
+    },
 
     "vADCVers" : {
       "Description" : "Please select vADC version. This template deploys Developer Edition SKU. Note not all vADC versions are available in all regions, and some older versions may not be available, too.",
@@ -93,15 +93,15 @@
       "ConstraintDescription" : "Must be a valid vADC version"
     },
 
-		"KeyName": {
-			"Type": "AWS::EC2::KeyPair::KeyName",
-			"Default": "",
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Default": "",
       "AllowedPattern" : "[-_ a-zA-Z0-9]*",
-			"Description": "Name of an existing EC2 KeyPair. Your vADC will launch with this KeyPair.",
+      "Description": "Name of an existing EC2 KeyPair. Your vADC will launch with this KeyPair.",
       "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
-		},
+    },
 
-		"AdminPass": {
+    "AdminPass": {
       "Description" : "Password for the vADC admin user. Must be 6 to 32 characters containing letters, numbers and symbols",
       "Type"        : "String",
       "MinLength"   : "6",
@@ -111,23 +111,23 @@
       "Default"        : "Password123"
     },
 
-		"RemoteAccessCIDR": {
-			"Description": "Allowed source IP address range for SSH access into vADC",
-			"Type": "String",
-			"MinLength": "9",
-			"MaxLength": "18",
-			"Default": "0.0.0.0/0",
+    "RemoteAccessCIDR": {
+      "Description": "Allowed source IP address range for SSH access into vADC",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
-		},
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
 
-		"VPCCIDR": {
-			"Description": "This is the IP block for your new VPC. Typically it is a /16 from the private IP range.",
-			"Type": "String",
-			"Default": "10.8.0.0/16",
+    "VPCCIDR": {
+      "Description": "This is the IP block for your new VPC. Typically it is a /16 from the private IP range.",
+      "Type": "String",
+      "Default": "10.8.0.0/16",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
-		},
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
 
     "AZs": {
       "Description": "List of Availability Zones where Private and Public subnet pairs will be created. Please select two.",
@@ -135,45 +135,45 @@
       "ConstraintDescription": "Please select an AZ from a drop-down list."            
     },
 
-		"PublicSubnetCIDR1": {
-			"Description": "vADC 1 will have one interface in this public subnet.",
-			"Type": "String",
-			"Default": "10.8.1.0/24",
+    "PublicSubnetCIDR1": {
+      "Description": "vADC 1 will have one interface in this public subnet.",
+      "Type": "String",
+      "Default": "10.8.1.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
-		},
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
 
-		"PublicSubnetCIDR2": {
-			"Description": "vADC 2 will have one interface in this public subnet.",
-			"Type": "String",
-			"Default": "10.8.2.0/24",
+    "PublicSubnetCIDR2": {
+      "Description": "vADC 2 will have one interface in this public subnet.",
+      "Type": "String",
+      "Default": "10.8.2.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
-		},
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
 
-		"PrivateSubnetCIDR1": {
-			"Description": "This is a private subnet available for your instances in AZ1.",
-			"Type": "String",
-			"Default": "10.8.3.0/24",
+    "PrivateSubnetCIDR1": {
+      "Description": "This is a private subnet available for your instances in AZ1.",
+      "Type": "String",
+      "Default": "10.8.3.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
-		},
-		
-		"PrivateSubnetCIDR2": {
-			"Description": "This is a private subnet available for your instances in AZ2.",
-			"Type": "String",
-			"Default": "10.8.4.0/24",
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
+    
+    "PrivateSubnetCIDR2": {
+      "Description": "This is a private subnet available for your instances in AZ2.",
+      "Type": "String",
+      "Default": "10.8.4.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-			"ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
-		}
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    }
 
 
-	},
+  },
 
-	"Mappings" : {
-		"AWSRegions" : {
-			"us-east-1"      : { "Name" : "US East (N. Virginia)" },
-			"us-west-1"      : { "Name" : "US West (N. California)" },
+  "Mappings" : {
+    "AWSRegions" : {
+      "us-east-1"      : { "Name" : "US East (N. Virginia)" },
+      "us-west-1"      : { "Name" : "US West (N. California)" },
       "us-west-2"      : { "Name" : "US West (Oregon)" },
       "eu-west-1"      : { "Name" : "EU (Ireland)" },
       "eu-central-1"   : { "Name" : "EU (Frankfurt)" },
@@ -201,120 +201,120 @@
 
   },
 
-	"Conditions" : {
-	},
-	
-	"Resources": {
+  "Conditions" : {
+  },
+  
+  "Resources": {
 
-		"VPC": {
-			"Type": "AWS::EC2::VPC",
-			"Properties": {
-				"CidrBlock": {
-					"Ref": "VPCCIDR"
-				},
-				"EnableDnsHostnames": "true",
-				"EnableDnsSupport": "true",
-				"Tags": [
-					{	"Key": "Application",
-						"Value": "vADC Quick Start"
-					},
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VPCCIDR"
+        },
+        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": "true",
+        "Tags": [
+          {  "Key": "Application",
+            "Value": "vADC Quick Start"
+          },
 
           { "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "VPC" ] ] }
           }
 
-				]
-			}
-		},
+        ]
+      }
+    },
 
-		"PublicSubnet1": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "PublicSubnetCIDR1"
-				},
-				"Tags": [
+    "PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnetCIDR1"
+        },
+        "Tags": [
           { "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSub1" ] ] }
-					}
-				],
-				"AvailabilityZone": {
+          }
+        ],
+        "AvailabilityZone": {
           "Fn::Select": [ "0", { "Ref": "AZs" } ]
-				}
-			}
-		},
+        }
+      }
+    },
 
-		"PublicSubnet2": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "PublicSubnetCIDR2"
-				},
-				"Tags": [
+    "PublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnetCIDR2"
+        },
+        "Tags": [
           { "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSub2" ] ] }
-					}
-				],
-				"AvailabilityZone": {
+          }
+        ],
+        "AvailabilityZone": {
           "Fn::Select": [ "1", { "Ref": "AZs" } ]
-				}
-			}
-		},
+        }
+      }
+    },
 
-		"PrivateSubnet1": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "PrivateSubnetCIDR1"
-				},
-				"Tags": [
-					{
-						"Key": "Name",
+    "PrivateSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PrivateSubnetCIDR1"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub1" ] ] }
-					}
-				],
-				"AvailabilityZone": {
+          }
+        ],
+        "AvailabilityZone": {
           "Fn::Select": [ "0", { "Ref": "AZs" } ]
-				}
-			}
-		},
+        }
+      }
+    },
 
-		"PrivateSubnet2": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "PrivateSubnetCIDR2"
-				},
-				"Tags": [
-					{
-						"Key": "Name",
+    "PrivateSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PrivateSubnetCIDR2"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub2" ] ] }
-					}
-				],
-				"AvailabilityZone": {
+          }
+        ],
+        "AvailabilityZone": {
           "Fn::Select": [ "1", { "Ref": "AZs" } ]
-				}
-			}
-		},
+        }
+      }
+    },
 
     "InternetGateway": {
       "Type": "AWS::EC2::InternetGateway",
       "Properties": {
         "Tags": [
           {
-						"Key": "Name",
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "IGW" ] ] }
           }
         ]
@@ -334,26 +334,26 @@
       }
     },
 
-		"PublicSubnetRouteTable": {
+    "PublicSubnetRouteTable": {
       "DependsOn": "AttachGateway",
-			"Type": "AWS::EC2::RouteTable",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"Tags": [
-					{
-						"Key": "Name",
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSubRouteTab" ] ] }
-					}
-				]
-			}
-		},
+          }
+        ]
+      }
+    },
 
     "PublicRoute1": {
       "Type": "AWS::EC2::Route",
       "DependsOn": "AttachGateway",
-	      "Properties": {
+        "Properties": {
         "RouteTableId": {
           "Ref": "PublicSubnetRouteTable"
         },
@@ -493,12 +493,12 @@
             }
           }
         ],
-				"Tags": [
-					{
-						"Key": "Name",
+        "Tags": [
+          {
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADCSG" ] ] }
-					}
-				]
+          }
+        ]
       }
     },
 
@@ -533,7 +533,7 @@
         "SourceDestCheck": "false",
         "Tags": [
           {
-						"Key": "Name",
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADC1PubInt" ] ] }
           },
           {
@@ -559,7 +559,7 @@
         "SourceDestCheck": "false",
         "Tags": [
           {
-						"Key": "Name",
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADC2PubInt" ] ] }
           },
           {
@@ -702,7 +702,7 @@
         "IamInstanceProfile": { "Ref": "vADCInstanceIAMProfile"},
         "Tags": [
           {
-						"Key": "Name",
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADC1" ] ] }
           }
         ],
@@ -824,7 +824,7 @@
         "IamInstanceProfile": { "Ref": "vADCInstanceIAMProfile"},
         "Tags": [
           {
-						"Key": "Name",
+            "Key": "Name",
             "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADC2" ] ] }
           }
         ],
@@ -903,45 +903,45 @@
         ]
       }
     }
-	
-	},
+  
+  },
 
-	"Outputs": {
+  "Outputs": {
 
-		"StackID": {
-			"Description": "Stack Id",
-			"Value": {
-					"Ref": "AWS::StackId"
-			}
-		},
+    "StackID": {
+      "Description": "Stack Id",
+      "Value": {
+          "Ref": "AWS::StackId"
+      }
+    },
 
-		"VPCID": {
-			"Description": "VPC Id",
-			"Value": {
-					"Ref": "VPC"
-			}
-		},
+    "VPCID": {
+      "Description": "VPC Id",
+      "Value": {
+          "Ref": "VPC"
+      }
+    },
 
-		"Region": {
-			"Description": "Region",
-			"Value": {
-					"Ref": "AWS::Region"
-			}
-		},
+    "Region": {
+      "Description": "Region",
+      "Value": {
+          "Ref": "AWS::Region"
+      }
+    },
 
-		"vADC1PubIP": {
-			"Description": "vADC 1 Public IP",
-			"Value": {
-					"Ref": "vADC1EIP"
-			}
-		},
+    "vADC1PubIP": {
+      "Description": "vADC 1 Public IP",
+      "Value": {
+          "Ref": "vADC1EIP"
+      }
+    },
 
-		"vADC2PubIP": {
-			"Description": "vADC 2 Public IP",
-			"Value": {
-					"Ref": "vADC2EIP"
-			}
-		},
+    "vADC2PubIP": {
+      "Description": "vADC 2 Public IP",
+      "Value": {
+          "Ref": "vADC2EIP"
+      }
+    },
 
     "ClusterAdminURL": {
       "Description": "URL to access vADC Cluster Admin interface",
@@ -954,6 +954,6 @@
       }
     }
 
-	}
+  }
  
 }
