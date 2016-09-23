@@ -12,7 +12,7 @@
 
         {
           "Label" : { "default" : "vADC Configuration" },
-          "Parameters" : [ "ExternalCIDR", "vADCVers", "InstanceType", "KeyName", "AdminPass" ]
+          "Parameters" : [ "SrvPoolCIDR", "vADCVers", "InstanceType", "KeyName", "AdminPass" ]
         },
         {
           "Label" : { "default" : "Security Configuration" },
@@ -20,7 +20,7 @@
         }
       ],
       "ParameterLabels" : {
-        "ExternalCIDR" : { "default" : "External CIDR Block:" },
+        "SrvPoolCIDR" : { "default" : "Server Pool CIDR Block:" },
         "VPCCIDR" : { "default" : "New VPC CIDR Block:" },
         "PublicSubnetCIDR1" : { "default" : "Public Subnet 1:" },
         "PublicSubnetCIDR2" : { "default" : "Public Subnet 2:" },
@@ -112,12 +112,12 @@
       "Default"        : "Password123"
     },
 
-    "ExternalCIDR": {
-      "Description": "Subnet outside the VPC where external pool members live. vADCs will access this subnet through their second interface connected to private subnet.",
+    "SrvPoolCIDR": {
+      "Description": "Subnet where pool members live; can be external to VPC. vADCs will access this subnet through their second interface connected to private subnet.",
       "Type": "String",
       "MinLength": "9",
       "MaxLength": "18",
-      "Default": "10.0.0.0/24",
+      "Default": "10.8.4.0/23",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
       "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
     },
@@ -149,7 +149,7 @@
     "PublicSubnetCIDR1": {
       "Description": "vADC 1 will have one interface in this public subnet.",
       "Type": "String",
-      "Default": "10.8.1.0/24",
+      "Default": "10.8.2.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
       "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
     },
@@ -157,7 +157,7 @@
     "PublicSubnetCIDR2": {
       "Description": "vADC 2 will have one interface in this public subnet.",
       "Type": "String",
-      "Default": "10.8.2.0/24",
+      "Default": "10.8.3.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
       "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
     },
@@ -165,7 +165,7 @@
     "PrivateSubnetCIDR1": {
       "Description": "This is a private subnet available for your instances in AZ1.",
       "Type": "String",
-      "Default": "10.8.3.0/24",
+      "Default": "10.8.4.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
       "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
     },
@@ -173,7 +173,7 @@
     "PrivateSubnetCIDR2": {
       "Description": "This is a private subnet available for your instances in AZ2.",
       "Type": "String",
-      "Default": "10.8.4.0/24",
+      "Default": "10.8.5.0/24",
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
       "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
     }
@@ -735,7 +735,7 @@
                     "echo '",
                     { "Fn::GetAtt" : [ "vADC1Interface2", "PrimaryPrivateIpAddress" ] },
                     "' | awk -F. '{ printf \"\\n\\nauto eth1\\niface eth1 inet static\\naddress %s\\nnetmask 255.255.255.0\\nup route add -net ",
-                    { "Ref" : "ExternalCIDR" },
+                    { "Ref" : "SrvPoolCIDR" },
                     " gw %s.%s.%s.1\\n\", $0, $1, $2, $3 }' >> /etc/network/interfaces"
                   ]]}
               },
@@ -885,7 +885,7 @@
                     "echo '",
                     { "Fn::GetAtt" : [ "vADC2Interface2", "PrimaryPrivateIpAddress" ] },
                     "' | awk -F. '{ printf \"\\n\\nauto eth1\\niface eth1 inet static\\naddress %s\\nnetmask 255.255.255.0\\nup route add -net ",
-                    { "Ref" : "ExternalCIDR" },
+                    { "Ref" : "SrvPoolCIDR" },
                     " gw %s.%s.%s.1\\n\", $0, $1, $2, $3 }' >> /etc/network/interfaces"
                   ]]}
               },
