@@ -404,9 +404,11 @@
           },
           {
             "IpProtocol": "tcp",
-            "FromPort": "9080",
-            "ToPort": "9080",
-            "CidrIp": "0.0.0.0/0"
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "RemoteAccessCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
@@ -415,15 +417,21 @@
             "CidrIp": "0.0.0.0/0"
           },
           {
-            "IpProtocol": "tcp",
-            "FromPort": "80",
-            "ToPort": "80",
+            "IpProtocol": "udp",
+            "FromPort": "9090",
+            "ToPort": "9090",
             "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
-            "FromPort": "443",
-            "ToPort": "443",
+            "FromPort": "9080",
+            "ToPort": "9080",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "9080",
+            "ToPort": "9080",
             "CidrIp": "0.0.0.0/0"
           },
           {
@@ -436,30 +444,6 @@
             "IpProtocol": "tcp",
             "FromPort": "8086",
             "ToPort": "8086",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "9080",
-            "ToPort": "9080",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "9090",
-            "ToPort": "9090",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "8092",
-            "ToPort": "8092",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "9070",
-            "ToPort": "9070",
             "CidrIp": "0.0.0.0/0"
           },
           {
@@ -482,11 +466,21 @@
           },
           {
             "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": {
-              "Ref": "RemoteAccessCIDR"
-            }
+            "FromPort": "9070",
+            "ToPort": "9070",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
           }
         ],
         "Tags": [
