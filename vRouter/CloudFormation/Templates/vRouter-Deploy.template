@@ -85,13 +85,13 @@
     },
 
     "vRVers" : {
-      "Description" : "Please select vRouter version. Note not all vRouter versions are available in all regions, and some older versions may not be available, too.",
+      "Description" : "Please select vRouter version:",
       "Type" : "String",
-      "Default" : "42R1B",
+      "Default" : "50R2B",
       "AllowedValues" : [
-        "41R2B",
         "41R3B",
-        "42R1B"
+        "42R1B",
+        "50R2B"
       ],
       "ConstraintDescription" : "Must be a valid vRouter version"
     },
@@ -200,16 +200,16 @@
     },
 
     "vRAMI" : {
-      "eu-west-1" : { "41R2B" : "ami-1e5efc6d", "41R3B" : "ami-e155d592", "42R1B" : "ami-6a59cf19" },
-      "ap-southeast-1" : { "41R2B" : "ami-3769aa54", "41R3B" : "ami-97d207f4", "42R1B" : "ami-88ad7ceb" },
-      "ap-southeast-2" : { "41R2B" : "ami-cc8cd7af", "41R3B" : "ami-0b9fbc68", "42R1B" : "ami-c5ac83a6" },
-      "eu-central-1" : { "41R2B" : "ami-10bba77c", "41R3B" : "ami-4114f52e", "42R1B" : "ami-3642ae59" },
-      "ap-northeast-2" : { "41R2B" : "ami-7dad6313", "41R3B" : "ami-7d1ad313", "42R1B" : "ami-93a06bfd" },
-      "ap-northeast-1" : { "41R2B" : "ami-6100350f", "41R3B" : "ami-a7f2e2c9", "42R1B" : "ami-772ccf16" },
-      "us-east-1" : { "41R2B" : "ami-bfb7e3d5", "41R3B" : "ami-d79a8dbd", "42R1B" : "ami-e8bb4c85" },
-      "sa-east-1" : { "41R2B" : "ami-86b433ea", "41R3B" : "ami-5c63ec30", "42R1B" : "ami-143eb678" },
-      "us-west-1" : { "41R2B" : "ami-dae18aba", "41R3B" : "ami-cd601cad", "42R1B" : "ami-342a5154" },
-      "us-west-2" : { "41R2B" : "ami-84abb4e5", "41R3B" : "ami-7fb5411f", "42R1B" : "ami-32867852" }
+      "eu-west-1" : { "41R3B" : "ami-e155d592", "42R1B" : "ami-6a59cf19", "50R2B" : "ami-68fd831b" },
+      "ap-southeast-1" : { "41R3B" : "ami-97d207f4", "42R1B" : "ami-88ad7ceb", "50R2B" : "ami-361ac055" },
+      "ap-southeast-2" : { "41R3B" : "ami-0b9fbc68", "42R1B" : "ami-c5ac83a6", "50R2B" : "ami-8fdaebec" },
+      "eu-central-1" : { "41R3B" : "ami-4114f52e", "42R1B" : "ami-3642ae59", "50R2B" : "ami-c73dcfa8" },
+      "ap-northeast-2" : { "41R3B" : "ami-7d1ad313", "42R1B" : "ami-93a06bfd", "50R2B" : "ami-8d38ede3" },
+      "ap-northeast-1" : { "41R3B" : "ami-a7f2e2c9", "42R1B" : "ami-772ccf16", "50R2B" : "ami-b0da0cd1" },
+      "us-east-1" : { "41R3B" : "ami-d79a8dbd", "42R1B" : "ami-e8bb4c85", "50R2B" : "ami-90473487" },
+      "sa-east-1" : { "41R3B" : "ami-5c63ec30", "42R1B" : "ami-143eb678", "50R2B" : "ami-28178744" },
+      "us-west-1" : { "41R3B" : "ami-cd601cad", "42R1B" : "ami-342a5154", "50R2B" : "ami-6c105f0c" },
+      "us-west-2" : { "41R3B" : "ami-7fb5411f", "42R1B" : "ami-32867852", "50R2B" : "ami-36994b56" }
     }
 
   },
