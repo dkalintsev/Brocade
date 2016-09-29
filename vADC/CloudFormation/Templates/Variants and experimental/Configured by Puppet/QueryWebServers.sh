@@ -101,7 +101,7 @@ tmpf="$manifest.$rand_str"
 
 cat "$manifest" | awk 1 ORS="|" \
   | sed -e "s/\(.*brocadevtm::pools { '$pool':.*basic__nodes_table                       => '\)\(\[[^]]*\]\)\(.*\)/\1\[$nodes\]\3/g" \
-  | tr '|' '\n' | sed '$d' > "$tmpf"
+  | tr '|' '\n' > "$tmpf"
 
 if [[ -s "$tmpf" ]]; then
     cat "$tmpf" > "$manifest"
