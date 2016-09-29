@@ -8,8 +8,6 @@ pool_tag="pup-WebServer"
 #
 # Variables
 #
-left="  basic__nodes_table                       => '["
-right="]',"
 left_in="{\"node\":\""
 right_in=":80\",\"priority\":1,\"state\":\"active\",\"weight\":1}"
 work_dir="/root"
@@ -86,7 +84,7 @@ else
     IPs=( $(printf "%s\n%s\n" "1.1.1.1" "2.2.2.2" ) )
 fi
 
-nodes="$left"
+nodes=""
 
 pos1=$(( ${#IPs[*]} - 1 ))
 
@@ -99,9 +97,21 @@ for j in $(seq 0 $pos1); do
 	fi
 done
 
-nodes="$nodes""$right"
+tmpf="$manifest.$rand_str"
 
-sed -i -e "s/.*basic__nodes.*/$nodes/g" "$manifest"
+cat "$manifest" | awk 1 ORS="|" \
+  | sed -e "s/\(.*brocadevtm::pools { '$pool':.*basic__nodes_table                       => '\)\(\[[^]]*\]\)\(.*\)/\1\[$nodes\]\3/g" \
+  | tr '|' '\n' | sed '$d' > "$tmpf"
+
+if [[ -s "$tmpf" ]]; then
+    cat "$tmpf" > "$manifest"
+    rm -f "$tmpf"
+else
+    echo "Edit resulted in an empty file for some reason."
+    echo "nodes var was \"$nodes\". Leaving $manifest unchanged."
+    rm -f "$tmpf"
+    exit 1
+fi
 
 newsha=$(shasum "$manifest")
 
