@@ -74,20 +74,26 @@ if [[ ! -f "$manifest" ]]; then
 	exit 1
 fi
 
-oldsha=$(shasum "$manifest")
+# Saving SHA checksum for later checking
+oldsha=$(shasum "$manifest" | awk '{print $1}')
 
 declare -a IPs
 
 if [[ "$debug" == "0" ]]; then
-    IPs=( $(aws ec2 describe-instances --region $region --filters "Name=tag:Name,Values=$pool_tag" "Name=instance-state-name,Values=running" | jq -r ".Reservations[] | .Instances[] | .NetworkInterfaces[] | .PrivateIpAddress") )
+    # Look up running instances with the "Name" Tag matching $pool_tag, use jq to extract their IPs
+    IPs=( $(aws ec2 describe-instances --region $region \
+        --filters "Name=tag:Name,Values=$pool_tag" \
+        "Name=instance-state-name,Values=running" \
+        | jq -r ".Reservations[] | .Instances[] | .NetworkInterfaces[] | .PrivateIpAddress") )
 else
+    # We're in debug mode; just set the array to two dummy IPs
     IPs=( $(printf "%s\n%s\n" "1.1.1.1" "2.2.2.2" ) )
 fi
+# After the above, the $IPs is the list of our backend pool servers' IPs 
 
+# Build up the list of pool servers in Puppet manifest format
 nodes=""
-
 pos1=$(( ${#IPs[*]} - 1 ))
-
 for j in $(seq 0 $pos1); do
 	a="$left_in""${IPs[$j]}""$right_in"
 	if (( $j < $pos1 )); then
@@ -97,11 +103,25 @@ for j in $(seq 0 $pos1); do
 	fi
 done
 
+# Edit the current manifest:
+# awk to change \n to |, then sed to search for our Pool name, replace
+# everything in "[]" against brocadevtm::pools with what we've cooked up just above,
+# and finally change | back to \n
+#
 tmpf="$manifest.$rand_str"
-
 cat "$manifest" | awk 1 ORS="|" \
   | sed -e "s/\(.*brocadevtm::pools { '$pool':.*basic__nodes_table                       => '\)\(\[[^]]*\]\)\(.*\)/\1\[$nodes\]\3/g" \
   | tr '|' '\n' > "$tmpf"
+
+# Some awk versions add another \n to the end of file.
+# Let's deal with that:
+#
+man_len=$(wc -l "$manifest" | awk '{print $1}')
+tmp_len=$(wc -l "$tmpf" | awk '{print $1}')
+if (( tmp_len == man_len+1 )); then
+    # Yep, we're dealing with one of those; let's fix it.
+    sed -i -e '$d' "$tmpf"
+fi
 
 if [[ -s "$tmpf" ]]; then
     cat "$tmpf" > "$manifest"
@@ -113,10 +133,11 @@ else
     exit 1
 fi
 
-newsha=$(shasum "$manifest")
+newsha=$(shasum "$manifest" | awk '{print $1}')
 
 if [[ "$newsha" != "$oldsha" ]]; then
     echo "File changed; need to update"
+    # Yeah, I know - error code "10" is arbitrary. Let me know if you have a better idea.
     exit 10
 else
     echo "No changes needed"

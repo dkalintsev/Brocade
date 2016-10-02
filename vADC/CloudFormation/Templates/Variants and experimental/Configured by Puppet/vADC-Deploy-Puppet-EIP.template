@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
 
-  "Description": "This AWS CloudFormation Template deploys a pair of Brocade vADCs into a new VPC. The AMI is chosen based on the region in which the stack is run. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template. In order to access the Brocade Virtual Traffic Manager please enter https://<public dns>:9090 into your web browser. For instructions on using this product, please visit: http://www.brocade.com/content/brocade/en/backend-content/pdf-page.html?/content/dam/common/documents/content-types/user-guide/brocade-vtm-11.0-cloud-gsg.pdf for the Cloud Services Installation and Getting Started Guide.", 
+  "Description": "This AWS CloudFormation Template deploys a pair of Brocade vADCs in front of two example web servers into a new VPC. It then deploys an additional instance that uses Puppet to push configuration to the vADC cluster, so that it serves the content from the two web servers. The AMI is chosen based on the region in which the stack is run. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
   "Metadata" : {
     "AWS::CloudFormation::Interface" : {
       "ParameterGroups" : [
@@ -469,55 +469,73 @@
             "IpProtocol": "udp",
             "FromPort": "9090",
             "ToPort": "9090",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "9080",
             "ToPort": "9080",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "udp",
             "FromPort": "9080",
             "ToPort": "9080",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "8083",
             "ToPort": "8083",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "8086",
             "ToPort": "8086",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "11000",
             "ToPort": "11000",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "11002",
             "ToPort": "11002",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "11007",
             "ToPort": "11007",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "9070",
             "ToPort": "9070",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
@@ -883,6 +901,38 @@
       }
     },
 
+    "PuppetServerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Puppet Server Access Rules",
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "-1",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "RemoteAccessCIDR"
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PuppetSG" ] ] }
+          }
+        ]
+      }
+    },
+
     "Puppet": {
       "Type": "AWS::EC2::Instance",
 
@@ -1007,7 +1057,7 @@
             },
             "GroupSet": [
               {
-                "Ref": "vADCSecurityGroup"
+                "Ref": "PuppetServerSecurityGroup"
               }
             ]
           }
@@ -1170,26 +1220,30 @@
             "FromPort": "22",
             "ToPort": "22",
             "CidrIp": {
-              "Ref": "RemoteAccessCIDR"
+              "Ref": "VPCCIDR"
             }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "80",
             "ToPort": "80",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "443",
             "ToPort": "443",
-            "CidrIp": "0.0.0.0/0"
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
           }
         ],
         "Tags": [
           {
             "Key": "Name",
-            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "WebCSG" ] ] }
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "WebSG" ] ] }
           }
         ]
       }
