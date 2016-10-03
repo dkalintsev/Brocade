@@ -469,25 +469,19 @@
             "IpProtocol": "udp",
             "FromPort": "9090",
             "ToPort": "9090",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "9080",
             "ToPort": "9080",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "udp",
             "FromPort": "9080",
             "ToPort": "9080",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
@@ -939,7 +933,7 @@
       "Metadata" : {
         "AWS::CloudFormation::Init" : {
           "configSets" : {
-            "default" : [ "CreateFiles", "RunCommands" ]
+            "default" : [ "CreateFiles" ]
           },
 
           "CreateFiles": {
@@ -996,21 +990,8 @@
                 "owner": "root"
               }
             }
-          },
-
-          "RunCommands" : {
-            "commands" : {
-
-              "01-dev_mode_accept" : {
-                "command" : "echo \"developer_mode_accepted     yes\" > /tmp/aaa"
-              },
-
-              "02-replicate_updated_config" : {
-                "command" : "sleep 30"
-              }
-
-            }
           }
+
         }
       },
 
@@ -1040,7 +1021,7 @@
           "         --stack ", { "Ref" : "AWS::StackName" },
           "         --resource Puppet ",
           "         --region ", { "Ref" : "AWS::Region" }, "\n",
-          "sleep 30\n",
+          "sleep 180\n",
           "cd /root\n",
           "rm -f crtab.txt\n",
           "echo \"*/5 * * * * /root/puppet-apply.sh > /dev/null 2>&1\" >> crtab.txt\n",
@@ -1407,27 +1388,6 @@
 
   "Outputs": {
 
-    "StackID": {
-      "Description": "Stack Id",
-      "Value": {
-          "Ref": "AWS::StackId"
-      }
-    },
-
-    "VPCID": {
-      "Description": "VPC Id",
-      "Value": {
-          "Ref": "VPC"
-      }
-    },
-
-    "Region": {
-      "Description": "Region",
-      "Value": {
-          "Ref": "AWS::Region"
-      }
-    },
-
     "vADC1PubIP": {
       "Description": "vADC 1 Public IP",
       "Value": {
@@ -1451,8 +1411,14 @@
           ":9090"
         ] ]
       }
+    },
+
+    "PuppetPubIP": {
+      "Description": "Public IP of Puppet server",
+      "Value": {
+          "Fn::GetAtt": [ "Puppet", "PublicIp" ]
+      }
     }
 
-  }
- 
+  } 
 }

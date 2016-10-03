@@ -19,3 +19,6 @@ The subnet is set by default to match the 2 x private subnets' CIDRs created by 
 
 To deal with the "double default gateway" issue, template runs a couple commands during initial configuration, where it resets the configuration for the second NIC, creates a static config for it, and then brings that second NIC up. All of that is done inside `default` configSet of `AWS::CloudFormation::Init` Metadata for the vADC instances.
 
+## `Configured by Puppet`
+
+Variant of the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates) that includes 2 x sample Web servers, and a Puppet server to configure the vADCs to serve content from these web servers. More details in [README inside](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants%20and%20experimental/Configured%20by%20Puppet).
