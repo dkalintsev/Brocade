@@ -927,6 +927,53 @@
       }
     },
 
+    "PuppetIAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [ "ec2.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "vADCIAMPolicy",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:DescribeInstances"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    "PuppetInstanceIAMProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "PuppetIAMRole"
+          }
+        ]
+      }
+    },
+
+
     "Puppet": {
       "Type": "AWS::EC2::Instance",
 
@@ -996,7 +1043,7 @@
       },
 
       "Properties": {
-        "IamInstanceProfile": { "Ref": "vADCInstanceIAMProfile"},
+        "IamInstanceProfile": { "Ref": "PuppetInstanceIAMProfile"},
         "Tags": [
           {
             "Key": "Name",
@@ -1021,7 +1068,7 @@
           "         --stack ", { "Ref" : "AWS::StackName" },
           "         --resource Puppet ",
           "         --region ", { "Ref" : "AWS::Region" }, "\n",
-          "sleep 180\n",
+          "sleep 60\n",
           "cd /root\n",
           "rm -f crtab.txt\n",
           "echo \"*/5 * * * * /root/puppet-apply.sh > /dev/null 2>&1\" >> crtab.txt\n",
@@ -1383,7 +1430,6 @@
       }
     }
 
-
   },
 
   "Outputs": {
@@ -1409,6 +1455,20 @@
           "https://",
           { "Fn::GetAtt": [ "vADC1", "PublicDnsName" ] },
           ":9090"
+        ] ]
+      }
+    },
+
+    "WebAppIPs": {
+      "Description": "Domain and Public IPs for sample WebApp",
+      "Value": {
+        "Fn::Join": [ "", [
+          "URL: ",
+          { "Ref": "DomainName" },
+          ", IP1: ",
+          { "Ref": "TrafficIP1" },
+          ", IP2: ",
+          { "Ref": "TrafficIP2" }
         ] ]
       }
     },
