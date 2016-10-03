@@ -65,7 +65,7 @@ You can deploy this template directly through AWS console or CLI, by downloading
 You can also launch this template into us-east-1 region by clicking the "Launch Stack" button below:
 
 <a href=
-https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vADC&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vADC/CloudFormation/Templates/Variants%20and%20experimental/Configured%20by%20Puppet/vADC-Deploy-Puppet-EIP.template>
+https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vADC&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vADC/CloudFormation/Templates/Variants+and+experimental/Configured+by+Puppet/vADC-Deploy-Puppet-EIP.template>
 <img src=https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png></a>
 
 
