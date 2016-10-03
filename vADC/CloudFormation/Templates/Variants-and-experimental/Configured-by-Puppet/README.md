@@ -9,6 +9,7 @@ As before, this is a proof-of-concept quality code, which is meant to provide a 
 * `vADC-Deploy-Puppet-EIP.template` - main template. As usual, download and deploy from your computer via CLI or CloudFormation UI, or use "Launch Stack" button below.
 * `example.pp` - Example parametrised Puppet manifest for the vADC cluster config
 * `QueryWebServers.sh` - script to update the cluster-specific manifest file with the IPs of the backend pool servers. It is run periodically to adjust backend pool config if/when necessary. 
+* `gencerts.sh` - quick'n'dirty script to generate self-signed certs and converth them into comma-delimited format suitable for pasting into template / parameter input box.
 
 ## What does the template do
 
