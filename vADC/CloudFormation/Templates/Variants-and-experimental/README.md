@@ -21,4 +21,4 @@ To deal with the "double default gateway" issue, template runs a couple commands
 
 ## `Configured by Puppet`
 
-Variant of the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates) that includes 2 x sample Web servers, and a Puppet server to configure the vADCs to serve content from these web servers. More details in [README inside](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants%20and%20experimental/Configured%20by%20Puppet).
+Variant of the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates) that includes 2 x sample Web servers, and a Puppet server to configure the vADCs to serve content from these web servers. More details in [README inside](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet).

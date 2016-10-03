@@ -41,7 +41,7 @@ While clearly being a demo, the template was designed to provide building blocks
 2. You deploy the rest of your application.
 3. Using vADC UI and CLI, as necessary, you configure vADC cluster as your appication requires.
 4. Once the above is in place, you run [`genNodeConfig`](https://forge.puppet.com/tuxinvader/brocadevtm#tools-gennodeconfig) to create a Puppet manifest from your running configured cluster.
-5. You then edit the resulting Puppet manifest, replacing the deployment-specific bits inside the manifest, such as IP addresses, DNS names, logins/passwords, SSL certs and so on with mustache-formatted variables, e.g., {{AdminPass}}. See what this looks like in the [example.pp](https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/Variants%20and%20experimental/Configured%20by%20Puppet/example.pp) manifest file in this repo. Once done, you upload the resuting parametrised manifest somewhere where `Puppet` resource from your application stack can get it from later - Git, S3, whatever.
+5. You then edit the resulting Puppet manifest, replacing the deployment-specific bits inside the manifest, such as IP addresses, DNS names, logins/passwords, SSL certs and so on with mustache-formatted variables, e.g., {{AdminPass}}. See what this looks like in the [example.pp](https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/example.pp) manifest file in this repo. Once done, you upload the resuting parametrised manifest somewhere where `Puppet` resource from your application stack can get it from later - Git, S3, whatever.
 6. Then you grab the `Puppet` resource from this template with its dependencies, add it to yours, adjusting the `/root/example.pp` section such that it points to the URL of your parametrised manifest, and has the appropriate variables in the `context` section.
 
 If all went well, you should be all set. :)
@@ -65,7 +65,7 @@ You can deploy this template directly through AWS console or CLI, by downloading
 You can also launch this template into us-east-1 region by clicking the "Launch Stack" button below:
 
 <a href=
-https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vADC-webapp&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vADC/CloudFormation/Templates/Variants+and+experimental/Configured+by+Puppet/vADC-Deploy-Puppet-EIP.template>
+https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vADC-webapp&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/vADC-Deploy-Puppet-EIP.template>
 <img src=https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png></a>
 
 
