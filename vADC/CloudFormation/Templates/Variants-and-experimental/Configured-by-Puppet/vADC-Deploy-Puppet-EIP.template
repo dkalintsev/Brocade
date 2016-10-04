@@ -184,7 +184,7 @@
 
     "AppConfigURL": {
       "Type": "String",
-      "Default": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants%20and%20experimental/Configured%20by%20Puppet/example.pp",
+      "Default": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/example.pp",
       "AllowedPattern" : "https?://[-a-zA-Z0-9\\.%/_]*",
       "Description": "URL of the Puppet manifest for vADC configuration.",
       "ConstraintDescription": "Please use letters, numbers, and dashes only. Apologies - this regex is rather simple."
@@ -986,7 +986,7 @@
           "CreateFiles": {
             "files" : {
               "/root/QueryWebServers.sh": {
-                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants%20and%20experimental/Configured%20by%20Puppet/QueryWebServers.sh",
+                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/QueryWebServers.sh",
                 "mode": "000755",
                 "owner": "root"
               },
