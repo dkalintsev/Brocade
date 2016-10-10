@@ -81,10 +81,12 @@ declare -a IPs
 
 if [[ "$debug" == "0" ]]; then
     # Look up running instances with the "Name" Tag matching $pool_tag, use jq to extract their IPs
+    # Sort at the end, in case AWS returns the same results in different order which shouldn't trigger update
     IPs=( $(aws ec2 describe-instances --region $region \
         --filters "Name=tag:Name,Values=$pool_tag" \
         "Name=instance-state-name,Values=running" \
-        | jq -r ".Reservations[] | .Instances[] | .NetworkInterfaces[] | .PrivateIpAddress") )
+        | jq -r ".Reservations[] | .Instances[] | .NetworkInterfaces[] | .PrivateIpAddress" \
+        | sort -rn) )
 else
     # We're in debug mode; just set the array to two dummy IPs
     IPs=( $(printf "%s\n%s\n" "1.1.1.1" "2.2.2.2" ) )
@@ -113,7 +115,7 @@ cat "$manifest" | awk 1 ORS="|" \
   | sed -e "s/\(.*brocadevtm::pools { '$pool':.*basic__nodes_table                       => '\)\(\[[^]]*\]\)\(.*\)/\1\[$nodes\]\3/g" \
   | tr '|' '\n' > "$tmpf"
 
-# Some awk versions add another \n to the end of file.
+# Some awk versions add an extra \n to the end of file.
 # Let's deal with that:
 #
 man_len=$(wc -l "$manifest" | awk '{print $1}')
