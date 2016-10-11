@@ -657,6 +657,10 @@
                 "command" : "echo \"rest!enabled     Yes\" >> /opt/zeus/zxtm/conf/settings.cfg"
               },
 
+              "03-enable_autofailover" : {
+                "command" : "sed -i -e \"s/\\(flipper\\!autofailback\\).*/\\1     Yes/g\" /opt/zeus/zxtm/conf/settings.cfg"
+              },
+
               "99-wait_3_mins_then_signal_that_we_are_done" : {
                 "command" : { "Fn::Join" : ["", [
                   "sleep 180 && /usr/local/bin/cfn-signal -s true '",
@@ -1109,14 +1113,6 @@
       }
     },
 
-    "NAT2EIP": {
-      "Type": "AWS::EC2::EIP",
-      "DependsOn": "AttachGateway",
-      "Properties": {
-        "Domain": "vpc"
-      }
-    },
-
     "NATGateway1": {
       "Type": "AWS::EC2::NatGateway",
       "DependsOn": "AttachGateway",
@@ -1129,22 +1125,6 @@
         },
         "SubnetId": {
           "Ref": "PublicSubnet1"
-        }
-      }
-    },
-
-    "NATGateway2": {
-      "Type": "AWS::EC2::NatGateway",
-      "DependsOn": "AttachGateway",
-      "Properties": {
-        "AllocationId": {
-          "Fn::GetAtt": [
-              "NAT2EIP",
-              "AllocationId"
-          ]
-        },
-        "SubnetId": {
-          "Ref": "PublicSubnet2"
         }
       }
     },
@@ -1164,21 +1144,6 @@
       }
     },
 
-    "PrivateSubnetRouteTable2": {
-      "Type": "AWS::EC2::RouteTable",
-      "Properties": {
-        "VpcId": {
-          "Ref": "VPC"
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSubRouteTab2" ] ] }
-          }
-        ]
-      }
-    },
-
     "PrivateRoute1": {
       "Type": "AWS::EC2::Route",
         "Properties": {
@@ -1188,19 +1153,6 @@
         "DestinationCidrBlock": "0.0.0.0/0",
         "NatGatewayId": {
           "Ref": "NATGateway1"
-        }
-      }
-    },
-
-    "PrivateRoute2": {
-      "Type": "AWS::EC2::Route",
-        "Properties": {
-        "RouteTableId": {
-          "Ref": "PrivateSubnetRouteTable2"
-        },
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "NatGatewayId": {
-          "Ref": "NATGateway2"
         }
       }
     },
@@ -1224,7 +1176,7 @@
           "Ref": "PrivateSubnet2"
         },
         "RouteTableId": {
-          "Ref": "PrivateSubnetRouteTable2"
+          "Ref": "PrivateSubnetRouteTable1"
         }
       }
     },

@@ -32,11 +32,17 @@ Since the template creates an Internet-facing "web app", it also creates two EIP
 
 It also creates a Route53 DNS zone, by default for domain `corp.local` and creates A records for `www.corp.local` and ALIAS for `corp.local` pointing to the two EIPs. If you would like to access your demo app at http(s)://www.corp.local, you'll need to delegate the NS for corp.local to the AWS Route53 servers associated with your newly created zone. To find out what these are, you'll need to open AWS Console UI, go to Route53, and look for the NS records for your hosted zone (`corp.local` if you used the defaults).
 
+Alternatively you can simply create the A records on your DNS server directly. `Outputs` section in the stack prints out the domain name and public IP addresses that vADCs will be listening on, for example:
+
+```
+URL: corp.local, IP1: 52.65.69.185, IP2: 52.62.54.195
+```
+
 Public/Private SSL certs included with the template are self-signed for *.corp.local. - please note that they need to be in comma-delimited format. To convert your cert files into comma-delimited format, you can use something similar to the following command:
 
 `awk 1 ORS=',' < myfile.crt > myfile-comma.crt`
 
-You will also notice the template creates 2 x NAT gateways - these are there purely to provide our Web servers sitting in the private subnets ability to reach to the Internet and install Apache.
+You will also notice the template creates a NAT gateway - it's there purely to provide our Web servers sitting in the private subnets ability to reach to the Internet and install Apache.
 
 ## How is this supposed to work
 
@@ -47,7 +53,7 @@ While clearly being a demo, the template was designed to provide building blocks
 3. Using vADC UI and CLI, as necessary, you configure vADC cluster as your appication requires.
 4. Once the above is in place, you run [`genNodeConfig`](https://forge.puppet.com/tuxinvader/brocadevtm#tools-gennodeconfig) to create a Puppet manifest from your running configured cluster.
 5. You then edit the resulting Puppet manifest, replacing the deployment-specific bits inside the manifest, such as IP addresses, DNS names, logins/passwords, SSL certs and so on with mustache-formatted variables, e.g., {{AdminPass}}. See what this looks like in the [example.pp](https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/example.pp) manifest file in this repo. Once done, you upload the resuting parametrised manifest somewhere where `Puppet` resource from your application stack can get it from later - Git, S3, whatever.
-6. Then you grab the `Puppet` resource from this template with its dependencies, add it to yours, adjusting the `/root/example.pp` section such that it points to the URL of your parametrised manifest, and has the appropriate variables in the `context` section.
+6. Then you grab the `Puppet`, `vADC1` and `vADC2` resources from this template with their dependencies, add them to yours, adjusting the `/root/example.pp` section of the `Puppet` resource such that it points to the URL of your parametrised manifest, and has the appropriate variables in the `context` section.
 
 If all went well, you should be all set. :)
 
