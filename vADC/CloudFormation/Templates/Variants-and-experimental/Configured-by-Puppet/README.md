@@ -13,6 +13,10 @@ As before, this is a proof-of-concept quality code, which is meant to provide a 
 
 ## What does the template do
 
+At the high level, it builds this:
+
+![Diagram](https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/images/vADC%20with%20Puppet%20and%20Web%20Servers.png "High level diagram")
+
 The first part that builds the cluster of 2 x vADCs is very similar to the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates), with a few small adjustments:
 
 - vADCs no longer use Elastic IPs, because otherwise this template would have needed more than AWS gives you by default (5 per region) due to additional requirements. Instead, they just get allocated public IPs dynamically. Also, template no longer uses ENIs for vADCs.

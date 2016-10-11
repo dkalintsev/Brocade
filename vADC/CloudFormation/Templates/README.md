@@ -39,6 +39,10 @@ As it stands now, it does the following:
   11. Two CloudWatch Recovery Alarms, one per vADC instance, that will try to recover them if underlying EC2 status checks fail for 15 minutes
 3. Output some values, such as allocated public IPs associated with the vADCs, and the Admin URL that you can click to access the vADC cluster management UI.
 
+At high level:
+
+![Diagram](https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/images/vADC%20Cluster.png "High level diagram")
+
 The template has been tested and seems to work well, but you should not treat it as production-ready without doing your own testing / verification.
 
 ## How to use
