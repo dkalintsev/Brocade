@@ -6,6 +6,7 @@
 # AdminPass = AdminPass
 # Region = AWS::Region
 # Verbose = "Yes|No" - this controls whether we print extensive log messages as we go.
+export PATH=$PATH:/usr/local/bin
 
 clusterID="{{StackName}}-vADC-Cluster"
 adminPass="{{AdminPass}}"
