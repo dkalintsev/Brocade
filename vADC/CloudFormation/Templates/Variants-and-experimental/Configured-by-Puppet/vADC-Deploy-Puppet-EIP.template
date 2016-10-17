@@ -20,7 +20,7 @@
         },
         {
           "Label" : { "default" : "Sample App Configuration" },
-          "Parameters" : [ "DomainName", "vADCConfigURL", "SSLPublicKey", "SSLPrivateKey" ]
+          "Parameters" : [ "DomainName", "AppConfigURL", "SSLPublicKey", "SSLPrivateKey" ]
         }
       ],
       "ParameterLabels" : {
@@ -487,49 +487,37 @@
             "IpProtocol": "tcp",
             "FromPort": "8083",
             "ToPort": "8083",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "8086",
             "ToPort": "8086",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "11000",
             "ToPort": "11000",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "11002",
             "ToPort": "11002",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "11007",
             "ToPort": "11007",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
             "FromPort": "9070",
             "ToPort": "9070",
-            "CidrIp": {
-              "Ref": "VPCCIDR"
-            }
+            "CidrIp": "0.0.0.0/0"
           },
           {
             "IpProtocol": "tcp",
