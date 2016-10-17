@@ -140,7 +140,11 @@ getLock () {
             logMsg "010: Looping until there's no instance matching \"$1:$2\""
             list=( $(findTaggedInstances $1 $2) )
             if [[ ${#list[*]} > 0 ]]; then
-                logMsg "011: Found some: \"$list\", sleeping..."
+                s_list="${list[0]}"
+                for i in $(seq 1 $((${#list[*]}-1)) ); do
+                    s_list="$s_list, ${list[$i]}";
+                done
+                logMsg "011: Found some: \"$s_list\", sleeping..."
                 sleep 5
             fi
         done
@@ -151,7 +155,11 @@ getLock () {
         # check if there are more than one including us
         while [[ ${#list[*]} > 0 ]]; do
             list=( $(findTaggedInstances $1 $2 | grep -v "$myInstanceID") )
-            logMsg "013: Looking for others with the same tags, found: \"$list\""
+            s_list="${list[0]}"
+            for i in $(seq 1 $((${#list[*]}-1)) ); do
+                s_list="$s_list, ${list[$i]}";
+            done
+            logMsg "013: Looking for others with the same tags, found: \"$s_list\""
             if [[ ${#list[*]} > 0 ]]; then
                 # there's someone else - clash
                 logMsg "014: Clash detected, calling delTag: \"$1\" \"$2\""
@@ -202,7 +210,11 @@ joinCluster () {
     # Are there is/are instances where $stateTag == $statusActive
     # There should be since this is how we got here, but let's make double sure.
     list=( $(findTaggedInstances $stateTag $statusActive) )
-    logMsg "022: Querying $statusActive vTMs; got: \"$list\""
+    s_list="${list[0]}"
+    for i in $(seq 1 $((${#list[*]}-1)) ); do
+        s_list="$s_list, ${list[$i]}";
+    done
+    logMsg "022: Querying $statusActive vTMs; got: \"$s_list\""
     if [[ ${#list[*]} > 0 ]]; then
         logMsg "023: Getting lock on $stateTag $statusJoining"
         getLock "$stateTag" "$statusJoining"
@@ -278,7 +290,11 @@ EOF
 
 declare -a list
 list=( $(findTaggedInstances $stateTag $statusActive | grep $myInstanceID) )
-logMsg "029: Checking if we are already $statusActive; got: \"$list\""
+s_list="${list[0]}"
+for i in $(seq 1 $((${#list[*]}-1)) ); do
+    s_list="$s_list, ${list[$i]}";
+done
+logMsg "029: Checking if we are already $statusActive; got: \"$s_list\""
 if [[ ${#list[*]} > 0 ]]; then
     logMsg "030: Looks like we've nothing more to do; exiting."
     exit 0
@@ -292,7 +308,11 @@ while true; do
     declare -a list
     # Is/are there are instances where $stateTag == $statusActive?
     list=( $(findTaggedInstances $stateTag $statusActive) )
-    logMsg "033: Checking for $statusActive vTMs; got: \"$list\""
+    s_list="${list[0]}"
+    for i in $(seq 1 $((${#list[*]}-1)) ); do
+        s_list="$s_list, ${list[$i]}";
+    done
+    logMsg "033: Checking for $statusActive vTMs; got: \"$s_list\""
     if [[ ${#list[*]} > 0 ]]; then
         logMsg "034: There are active node(s), starting join process."
         joinCluster
