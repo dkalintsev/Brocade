@@ -589,6 +589,17 @@
 
           "CreateFiles" : {
             "files" : {
+              "/tmp/autocluster.sh" : {
+                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Autoclustering/autocluster.sh",
+                "context": {
+                  "StackName": { "Ref": "AWS::StackName" },
+                  "AdminPass": { "Ref": "AdminPass" },
+                  "Region":  { "Ref": "AWS::Region" },
+                  "Verbose": "Yes"              
+                },
+                "mode": "000755",
+                "owner": "root"
+              },
               "/tmp/setup_stuff.sh" : {
                 "content": { "Fn::Join": [ "", [
                   "#!/bin/bash\n",
@@ -603,21 +614,9 @@
                   "wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64\n",
                   "mv jq-linux64 /usr/local/bin/jq\n",
                   "chmod +x /usr/local/bin/jq\n",
-                  "sleep 5\n",
-                  "/tmp/autocluster.sh\n",
+                  "exit 0\n",
                   "\n"
                 ]]},
-                "mode": "000755",
-                "owner": "root"
-              },
-              "/tmp/autocluster.sh" : {
-                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Autoclustering/autocluster.sh",
-                "context": {
-                  "StackName": { "Ref": "AWS::StackName" },
-                  "AdminPass": { "Ref": "AdminPass" },
-                  "Region":  { "Ref": "AWS::Region" },
-                  "Verbose": "Yes"              
-                },
                 "mode": "000755",
                 "owner": "root"
               }
@@ -633,6 +632,14 @@
 
               "02-del_setup_script" : {
                 "command" : "rm -f /tmp/setup_stuff.sh"
+              },
+
+              "03-run_autocluster" : {
+                "command" : "/tmp/autocluster.sh"
+              },
+
+              "04-del_autocluster_script" : {
+                "command" : "rm -f /tmp/autocluster.sh"
               },
 
               "99-wait_1_min_then_signal_that_we_are_done" : {
