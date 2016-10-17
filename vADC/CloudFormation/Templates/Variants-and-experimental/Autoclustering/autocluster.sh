@@ -47,7 +47,7 @@ myInstanceID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 logMsg () {
     if [[ "$verbose" =~ ^[Yy] ]]; then
         ts=$(date -u +%FT%TZ)
-        echo "$ts $0[$$]: $*"
+        echo "$ts $0[$$]: $*" >> /tmp/autocluster.log
     fi
 }
 
