@@ -10,7 +10,6 @@
 #
 # We expect the following vars passed in:
 # ClusterID = AWS EC2 tag used to find vADC instances in our cluster
-# AdminPass = AdminPass
 # Region = AWS::Region
 # Verbose = "Yes|No" - this controls whether we print extensive log messages as we go.
 # vADCFQDN = "[FQDN]" - optional FQDN for vADC cluster, maintained by Route53
@@ -26,7 +25,6 @@ configDir="/opt/zeus/zxtm/conf/zxtms"
 configSync="/opt/zeus/zxtm/bin/replicate-config"
 
 clusterID="{{ClusterID}}"
-adminPass="{{AdminPass}}"
 region="{{Region}}"
 verbose="{{Verbose}}"
 MyFQDN="{{vADCFQDN}}"
@@ -78,7 +76,7 @@ setTag () {
     unset stList
     while [[ ${#stList[*]} == 0 ]]; do
         stList=( $(findTaggedInstances $1 $2 | grep "$myInstanceID") )
-        logMsg "004: Checking tagged instances \"$1:$2\", expecting to see ourselves; got \"$stList\""
+        logMsg "004: Checking tagged instances \"$1:$2\", expecting to see $myInstanceID; got \"$stList\""
         if [[ ${#stList[*]} == 1 ]]; then
             logMsg "005: Found us, we're done."
         else
@@ -102,7 +100,7 @@ delTag () {
     stList=( blah )
     while [[ ${#stList[*]} > 0 ]]; do
         stList=( $(findTaggedInstances $1 $2 | grep "$myInstanceID") )
-        logMsg "008: Checking tagged instances \"$1:$2\", expecting NOT to see ourselves; got \"$stList\""
+        logMsg "008: Checking tagged instances \"$1:$2\", expecting NOT to see $myInstanceID; got \"$stList\""
         if [[ ${#stList[*]} == 0 ]]; then
             logMsg "009: Tag \"$1:$2\" is not there, we're done."
         else
@@ -200,7 +198,9 @@ else
 fi
 
 logMsg "022: Getting lock on $statusWorking.."
-getLock $housekeeperTag $statusWorking
+# Just in case - if there was previous unsuccessful run
+delTag "$housekeeperTag" "$statusWorking"
+getLock "$housekeeperTag" "$statusWorking"
 
 # Creating temp filenames to keep lists of running and clustered instances, and delta between the two.
 #
@@ -232,11 +232,11 @@ if [[ -s $deltaInstF ]]; then
         grep -l "$instId" * >> $filesF 2>/dev/null
     done
     if [[ -s $filesF ]]; then
-        svIFS=IFS
+        svIFS=$IFS
         IFS=$(echo -en "\n\b")
         files=( $(cat $filesF) )
-        IFS=svIFS
-        for file in ${files[@]}; do
+        IFS=$svIFS
+        for file in "${files[@]}"; do
             logMsg "027: Deleting $file.."
             rm -f "$file"
         done
@@ -246,12 +246,12 @@ if [[ -s $deltaInstF ]]; then
     else
         logMsg "030: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
     fi
-    delTag $housekeeperTag $statusWorking
+    delTag "$housekeeperTag" "$statusWorking"
     rm -f $runningInstF $clusteredInstF $deltaInstF $filesF
     exit 0
 else
     logMsg "031: No delta, exiting."
-    delTag $housekeeperTag $statusWorking
+    delTag "$housekeeperTag" "$statusWorking"
     rm -f $runningInstF $clusteredInstF $deltaInstF $filesF
     exit 0    
 fi
