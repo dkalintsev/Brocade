@@ -24,6 +24,7 @@ function show_help {
     printf "\nRequired parameters:\n\t-r <region> : Region where we're running\n"
     printf "\t-p <pool name> : Name of the pool in the Manifest file (must exist)\n"
     printf "\t-t <pool tag> : unique tag to find pool EC2 instances by\n\n"
+    printf "Instance running this script needs to have an IAM role with Policy allowing ec2:DescribeInstances\n\n"
 }
 
 while getopts "h?dr:p:t:" opt; do

@@ -592,7 +592,10 @@
               "/tmp/autocluster.sh" : {
                 "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Autoclustering/autocluster.sh",
                 "context": {
-                  "StackName": { "Ref": "AWS::StackName" },
+                  "ClusterID":  { "Fn::Join": [ "-", [
+                    { "Ref": "AWS::StackName" },
+                    "vADC-Cluster"
+                  ]]},
                   "AdminPass": { "Ref": "AdminPass" },
                   "Region":  { "Ref": "AWS::Region" },
                   "Verbose": "Yes"              
@@ -614,6 +617,7 @@
                   "wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64\n",
                   "mv jq-linux64 /usr/local/bin/jq\n",
                   "chmod +x /usr/local/bin/jq\n",
+                  "mkdir -p /opt/aws\n",
                   "exit 0\n",
                   "\n"
                 ]]},

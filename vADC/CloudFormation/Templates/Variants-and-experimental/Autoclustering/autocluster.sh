@@ -1,14 +1,26 @@
 #!/bin/bash
 #
-# This script is customised on deploy by cfn-init
+# This script is customised during vADC instance deployment by cfn-init
+# Please see example usage in the CloudFormation template:
+# https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/Variants-and-experimental/Autoclustering/vADC-Deploy-ASG.template
+#
+# The purpose of this script is to form a new vADC cluster or join an existing one.
+#
 # We expect the following vars passed in:
-# StackName = AWS::StackName
+# ClusterID = AWS EC2 tag used to find vADC instances in our cluster
 # AdminPass = AdminPass
 # Region = AWS::Region
 # Verbose = "Yes|No" - this controls whether we print extensive log messages as we go.
+#
+# vADC instances running this script will need to have an IAM Role with the Policy allowing:
+# - ec2:DescribeInstances
+# - ec2:CreateTags
+# - ec2:DeleteTags
+# 
 export PATH=$PATH:/usr/local/bin
+logFile="/var/log/autoscluster.log"
 
-clusterID="{{StackName}}-vADC-Cluster"
+clusterID="{{ClusterID}}"
 adminPass="{{AdminPass}}"
 region="{{Region}}"
 verbose="{{Verbose}}"
@@ -48,7 +60,7 @@ myInstanceID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 logMsg () {
     if [[ "$verbose" =~ ^[Yy] ]]; then
         ts=$(date -u +%FT%TZ)
-        echo "$ts $0[$$]: $*" >> /tmp/autocluster.log
+        echo "$ts $0[$$]: $*" >> $logFile
     fi
 }
 
@@ -65,7 +77,7 @@ setTag () {
     unset stList
     while [[ ${#stList[*]} == 0 ]]; do
         stList=( $(findTaggedInstances $1 $2 | grep "$myInstanceID") )
-        logMsg "003: Checking tagged instances \"$1:$2\", expecting to see ourselves; got \"$stList\""
+        logMsg "003: Checking tagged instances \"$1:$2\", expecting to see $myInstanceID; got \"$stList\""
         if [[ ${#stList[*]} == 1 ]]; then
             logMsg "004: Found us, we're done."
         else
@@ -89,9 +101,9 @@ delTag () {
     stList=( blah )
     while [[ ${#stList[*]} > 0 ]]; do
         stList=( $(findTaggedInstances $1 $2 | grep "$myInstanceID") )
-        logMsg "007: Checking tagged instances \"$1:$2\", expecting NOT to see ourselves; got \"$stList\""
+        logMsg "007: Checking tagged instances \"$1:$2\", expecting NOT to see $myInstanceID; got \"$stList\""
         if [[ ${#stList[*]} == 0 ]]; then
-            logMsg "008: Tag \"$1:$2\" is gone, we're done."
+            logMsg "008: Tag \"$1:$2\" is not there, we're done."
         else
             logMsg "009: Not yet; sleeping for a bit."
             sleep 3
@@ -140,10 +152,7 @@ getLock () {
             logMsg "010: Looping until there's no instance matching \"$1:$2\""
             list=( $(findTaggedInstances $1 $2) )
             if [[ ${#list[*]} > 0 ]]; then
-                s_list="${list[0]}"
-                for i in $(seq 1 $((${#list[*]}-1)) ); do
-                    s_list="$s_list, ${list[$i]}";
-                done
+                s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
                 logMsg "011: Found some: \"$s_list\", sleeping..."
                 sleep 5
             fi
@@ -155,10 +164,7 @@ getLock () {
         # check if there are more than one including us
         while [[ ${#list[*]} > 0 ]]; do
             list=( $(findTaggedInstances $1 $2 | grep -v "$myInstanceID") )
-            s_list="${list[0]}"
-            for i in $(seq 1 $((${#list[*]}-1)) ); do
-                s_list="$s_list, ${list[$i]}";
-            done
+            s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
             logMsg "013: Looking for others with the same tags, found: \"$s_list\""
             if [[ ${#list[*]} > 0 ]]; then
                 # there's someone else - clash
@@ -210,10 +216,7 @@ joinCluster () {
     # Are there is/are instances where $stateTag == $statusActive
     # There should be since this is how we got here, but let's make double sure.
     list=( $(findTaggedInstances $stateTag $statusActive) )
-    s_list="${list[0]}"
-    for i in $(seq 1 $((${#list[*]}-1)) ); do
-        s_list="$s_list, ${list[$i]}";
-    done
+    s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
     logMsg "022: Querying $statusActive vTMs; got: \"$s_list\""
     if [[ ${#list[*]} > 0 ]]; then
         logMsg "023: Getting lock on $stateTag $statusJoining"
@@ -290,10 +293,7 @@ EOF
 
 declare -a list
 list=( $(findTaggedInstances $stateTag $statusActive | grep $myInstanceID) )
-s_list="${list[0]}"
-for i in $(seq 1 $((${#list[*]}-1)) ); do
-    s_list="$s_list, ${list[$i]}";
-done
+s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
 logMsg "029: Checking if we are already $statusActive; got: \"$s_list\""
 if [[ ${#list[*]} > 0 ]]; then
     logMsg "030: Looks like we've nothing more to do; exiting."
@@ -308,10 +308,7 @@ while true; do
     declare -a list
     # Is/are there are instances where $stateTag == $statusActive?
     list=( $(findTaggedInstances $stateTag $statusActive) )
-    s_list="${list[0]}"
-    for i in $(seq 1 $((${#list[*]}-1)) ); do
-        s_list="$s_list, ${list[$i]}";
-    done
+    s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
     logMsg "033: Checking for $statusActive vTMs; got: \"$s_list\""
     if [[ ${#list[*]} > 0 ]]; then
         logMsg "034: There are active node(s), starting join process."
