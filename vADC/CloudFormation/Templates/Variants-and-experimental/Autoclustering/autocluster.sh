@@ -122,10 +122,14 @@ findTaggedInstances () {
     filter="Name=tag:ClusterID,Values=$clusterID \
             Name=instance-state-name,Values=running"
 
+    # if we're given tag and value, look for these; if not - just return running instances with our ClusterID
+    if [ $# -eq "2" ]; then
+        filter=$filter" Name=tag:$1,Values=$2"
+    fi
+
     # No logging here, since we're returning the actual output and log will mess with it. :)
     aws ec2 describe-instances --region $region \
         --filters $filter \
-        "Name=tag:$1,Values=$2" \
         | jq -r ".Reservations[] | .Instances[] | .InstanceId"
 }
 
@@ -289,8 +293,17 @@ EOF
     fi
 }
 
-# Before we begin, let's check if we're already in $statusActive state, so as not to waste time.
+# Sanity check: can we find ourselves in "running" state?
+#
+declare -a stList
+stList=( $(findTaggedInstances| grep "$myInstanceID") )
+if [[ ${#stList[*]} == 0 ]]; then
+    logMsg "041: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
+    exit 1
+fi
 
+# Let's check if we're already in $statusActive state, so as not to waste time.
+#
 declare -a list
 list=( $(findTaggedInstances $stateTag $statusActive | grep $myInstanceID) )
 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
