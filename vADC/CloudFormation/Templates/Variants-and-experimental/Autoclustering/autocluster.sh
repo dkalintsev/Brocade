@@ -275,6 +275,7 @@ MAIN: {
 }
 EOF
         chmod +x $tmpf
+        sleep 30
         $tmpf
         if [[ "$?" != "0" ]]; then
             logMsg "026: Some sort of error happened, let's keep trying.."
