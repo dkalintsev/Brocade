@@ -172,7 +172,7 @@
       "Type": "String",
       "Default": "corp.local",
       "AllowedPattern" : "[\\-a-zA-Z0-9\\.]*",
-      "Description": "Domain name for the vADC Cluster management access. Template will create Route53 for this domain. Each vADCs will add an A-record for mgmt.<this_domain> for its own public management IP address.",
+      "Description": "Domain name for the vADC Cluster management access. Template will create a Route53 HostedZone for this domain. Each vADCs will add an A-record for with its own public management IP address pointing to mgmt.<this_domain>.",
       "ConstraintDescription": "Please use letters, numbers, and dashes only."
     }
 
@@ -663,8 +663,6 @@
                   "mv /tmp/housekeeper.sh /opt/aws/\n",
                   "rm -f /tmp/ctab.txt\n",
                   "echo \"*/2 * * * * /opt/aws/housekeeper.sh > /dev/null 2>&1\" > /tmp/ctab.txt\n",
-                  "crontab /tmp/ctab.txt\n",
-                  "rm -f /tmp/ctab.txt\n",
                   "exit 0\n",
                   "\n"
                 ]]},
@@ -691,6 +689,14 @@
 
               "04-del_autocluster_script" : {
                 "command" : "rm -f /tmp/autocluster.sh"
+              },
+
+              "05-add_crontab" : {
+                "command" : "crontab /tmp/ctab.txt"
+              },
+
+              "06-del_ctab_txt" : {
+                "command" : "rm -f /tmp/ctab.txt"
               },
 
               "99-wait_1_min_then_signal_that_we_are_done" : {
