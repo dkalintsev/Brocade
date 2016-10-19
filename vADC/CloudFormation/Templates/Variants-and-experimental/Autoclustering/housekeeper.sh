@@ -240,8 +240,9 @@ if [[ -s $deltaInstF ]]; then
             logMsg "027: Deleting $file.."
             rm -f "$file"
         done
-        logMsg "028: Synchronising cluster state.."
+        logMsg "028: Synchronising cluster state and sleeping to let things settle.."
         $configSync
+        sleep 60
         logMsg "029: All done, exiting."
     else
         logMsg "030: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."

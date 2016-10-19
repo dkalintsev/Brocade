@@ -554,10 +554,7 @@
                     "route53:ListResourceRecordSets",
                     "route53:ChangeResourceRecordSets"
                   ],
-                  "Resource": { "Fn::Join": ["", [
-                    "arn:aws:route53:::hostedzone/",
-                    { "Ref": "DNS" }
-                  ]]} 
+                  "Resource": "arn:aws:route53:::hostedzone/*"
                 }
               ]
             }
@@ -664,7 +661,7 @@
                   "mkdir -p /opt/aws\n",
                   "mv /tmp/housekeeper.sh /opt/aws/\n",
                   "rm -f /tmp/ctab.txt\n",
-                  "echo \"*/2 * * * * /opt/aws/housekeeper.sh > /dev/null 2>&1\" > /tmp/ctab.txt\n",
+                  "echo \"*/5 * * * * /opt/aws/housekeeper.sh > /dev/null 2>&1\" > /tmp/ctab.txt\n",
                   "exit 0\n",
                   "\n"
                 ]]},
