@@ -83,11 +83,25 @@ declare -a IPs
 if [[ "$debug" == "0" ]]; then
     # Look up running instances with the "Name" Tag matching $pool_tag, use jq to extract their IPs
     # Sort at the end, in case AWS returns the same results in different order which shouldn't trigger update
-    IPs=( $(aws ec2 describe-instances --region $region \
+    errCode=1
+    backoff=1
+    multiplier=2
+    resFName="/tmp/aws-out.$rand_str"
+    while [[ "$errCode" != "0" ]]; do
+        rm -f $resFName
+        aws ec2 describe-instances --region $region \
         --filters "Name=tag:Name,Values=$pool_tag" \
-        "Name=instance-state-name,Values=running" \
+        "Name=instance-state-name,Values=running" > $resFName 2>&1
+        errCode=$?
+        if [[ "$errCode" != "0" ]]; then
+            sleep $backoff
+            let "backoff =* multiplier"
+        fi
+    done
+    IPs=( $(cat $resFName \
         | jq -r ".Reservations[] | .Instances[] | .NetworkInterfaces[] | .PrivateIpAddress" \
         | sort -rn) )
+    rm -f $resFName
 else
     # We're in debug mode; just set the array to two dummy IPs
     IPs=( $(printf "%s\n%s\n" "1.1.1.1" "2.2.2.2" ) )
