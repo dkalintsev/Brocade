@@ -790,7 +790,19 @@
                 "command" : "echo \"developer_mode_accepted     yes\" >> /opt/zeus/zxtm/global.cfg"
               },
 
-              "02-replicate_updated_config" : {
+              "02-enable_rest_api" : {
+                "command" : "echo \"rest!enabled     Yes\" >> /opt/zeus/zxtm/conf/settings.cfg"
+              },
+
+              "03-enable_autofailover_1" : {
+                "command" : "sed -i -e \"/flipper.autofailback/d\" /opt/zeus/zxtm/conf/settings.cfg"
+              },
+
+              "04-enable_autofailover_2" : {
+                "command" : "echo \"flipper!autofailback     Yes\" >> /opt/zeus/zxtm/conf/settings.cfg"
+              },
+
+              "05-replicate_updated_config" : {
                 "command" : "sleep 30 && /opt/zeus/zxtm/bin/replicate-config"
               }
 

@@ -38,7 +38,7 @@ statusForming="Forming"
 
 # Random string for /tmp files
 rand_str=$(cat /dev/urandom | env LC_CTYPE=C tr -cd 'a-f0-9' | head -c 10)
-
+resFName="/tmp/aws-out.$rand_str"
 
 if [[ "$verbose" == "" ]]; then
     # there's no such thing as too much logging ;)
@@ -72,7 +72,6 @@ safe_aws () {
     errCode=1
     backoff=1
     multiplier=2
-    resFName="/tmp/aws-out.$rand_str"
     while [[ "$errCode" != "0" ]]; do
         if (( $backoff > 32 )); then
             # Exceeded backoff budget of 64 seconds; giving up for now.
@@ -85,15 +84,32 @@ safe_aws () {
             sleep $backoff
             let "backoff =* multiplier"
         fi
-        # Now let's validate that our result file is a valid JSON, and keep repeating if not.
-        if [[ "$errCode" == 0 ]]; then
-            jq '.' $resFName > /dev/null 2>&1
-            errCode=$?
-        fi
     done
-    cat $resFName
-    rm -f $resFName
+    return 0
 }
+
+safe_aws_json () {
+    safe_aws $*
+    errCode=$?
+    if [[ "$errCode" != "0" ]]; then
+        # AWS CLI failed
+        echo ""
+        return 1
+    else
+        jq '.' $resFName > /dev/null 2>&1
+        errCode=$?
+        if [[ "$errCode" == "0" ]]; then
+            # Result is a valid JSON
+            cat $resFName
+            rm -f $resFName
+        else
+            # Result wasn't valid JSON
+            echo ""
+            return 2
+        fi
+    fi
+}
+
 
 # Set tag on $myInstanceID
 # $1 = tag
@@ -101,7 +117,7 @@ safe_aws () {
 #
 setTag () {
     logMsg "002: Setting tags on $myInstanceID: \"$1:$2\""
-    aws ec2 create-tags --region $region \
+    safe_aws ec2 create-tags --region $region \
         --resources $myInstanceID \
         --tags Key=$1,Value=$2
     declare -a stList
@@ -125,7 +141,7 @@ setTag () {
 #
 delTag () {
     logMsg "006: Deleting tags: \"$1:$2\""
-    aws ec2 delete-tags --region $region \
+    safe_aws ec2 delete-tags --region $region \
         --resources $myInstanceID \
         --tags Key=$1
     declare -a stList
