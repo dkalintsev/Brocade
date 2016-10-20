@@ -9,7 +9,7 @@ As before, this is a proof-of-concept quality code, which is meant to provide a 
 * `vADC-Deploy-Puppet-EIP.template` - main template. As usual, download and deploy from your computer via CLI or CloudFormation UI, or use "Launch Stack" button below.
 * `example.pp` - Example parametrised Puppet manifest for the vADC cluster config
 * `QueryWebServers.sh` - script to update the cluster-specific manifest file with the IPs of the backend pool servers. It is run periodically to adjust backend pool config if/when necessary. 
-* `gencerts.sh` - quick'n'dirty script to generate self-signed certs and converth them into comma-delimited format suitable for pasting into template / parameter input box.
+* `gencerts.sh` - quick'n'dirty script to generate self-signed certs and convert them into comma-delimited format suitable for pasting into template / parameter input box.
 
 ## What does the template do
 
@@ -97,7 +97,7 @@ https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?
 **Q**: I don't need the vADC anymore. How can I cancel my subscription?  
 **A**: Visit [Your Software Subscriptions](https://aws.amazon.com/marketplace/library/) in AWS Marketplace, and click "Cancel Subscription" against the "Brocade Virtual Traffic Manager Developer Edition", or the appropriate other edition you may have chosen.
 
-**Q**: I selected a vADC version "100", and deployment has failed. I'm subscribed to the product. I also see something about product being no longer available from Marketplace in the CloudFormation Events log.
+**Q**: I selected a vADC version "100", and deployment has failed. I'm subscribed to the product. I also see something about product being no longer available from Marketplace in the CloudFormation Events log.  
 **A**: I could not find any way to tell which images that Marketplace query returns are actually "active" from the ones that are not. Information returned by the "describe-images" CLI command for the AMIs that are active/deployable and the ones that "no longer available" provides no clues - they both look identical. :( The only reliable way to tell which version really is available it to visit product's page in Marketplace, and click "(Other available versions)". :( 
 
 **Q**: Why do you present drop-down of AZs? Can't you just use Fn::GetAZs?  
