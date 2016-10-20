@@ -64,6 +64,10 @@ logMsg () {
     fi
 }
 
+safe_aws () {
+    
+}
+
 # Set tag on $myInstanceID
 # $1 = tag
 # $2 = value

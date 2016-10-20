@@ -13,12 +13,13 @@ right_in=":80\",\"priority\":1,\"state\":\"active\",\"weight\":1}"
 work_dir="/root"
 manifest="example.pp"
 rand_str=$(cat /dev/urandom | env LC_CTYPE=C tr -cd 'a-f0-9' | head -c 10)
+export PATH=$PATH:/usr/local/bin
 
 OPTIND=1
 debug=0
 
 function show_help {
-	printf "\nThis script will find out IPs of running EC2 instances tagged with the specified Tag\n"
+    printf "\nThis script will find out IPs of running EC2 instances tagged with the specified Tag\n"
     printf "and update the specified ::pools in the Puppet manifest file $work_dir/$manifest accordingly.\n"
     printf "\nThe script will indicate through an exit code whether changes were made - 0 for no, 10 for yes.\n"
     printf "\nRequired parameters:\n\t-r <region> : Region where we're running\n"
@@ -68,11 +69,16 @@ if [[ "$debug" == "0" ]]; then
         echo "Looks like we don't have jq installed; quitting'"
         exit 1
     fi
+    which aws >/dev/null 2>&1
+    if [[ "$?" != "0" ]]; then
+        echo "Looks like we don't have AWS CLI installed; quitting'"
+        exit 1
+    fi
 fi
 
 if [[ ! -f "$manifest" ]]; then
-	echo "Can't find \"$manifest\"; exiting"
-	exit 1
+    echo "Can't find \"$manifest\"; exiting"
+    exit 1
 fi
 
 # Saving SHA checksum for later checking
@@ -88,6 +94,10 @@ if [[ "$debug" == "0" ]]; then
     multiplier=2
     resFName="/tmp/aws-out.$rand_str"
     while [[ "$errCode" != "0" ]]; do
+        if (( $backoff > 64 )); then
+            echo "Exceeded backoff budget of 64 seconds; giving up for now."
+            exit 1
+        fi
         rm -f $resFName
         aws ec2 describe-instances --region $region \
         --filters "Name=tag:Name,Values=$pool_tag" \
@@ -96,6 +106,11 @@ if [[ "$debug" == "0" ]]; then
         if [[ "$errCode" != "0" ]]; then
             sleep $backoff
             let "backoff =* multiplier"
+        fi
+        # Now let's validate that our result file is a valid JSON, and keep repeating if not.
+        if [[ "$errCode" == 0 ]]; then
+            jq '.' $resFName > /dev/null 2>&1
+            errCode=$?
         fi
     done
     IPs=( $(cat $resFName \
@@ -112,12 +127,12 @@ fi
 nodes=""
 pos1=$(( ${#IPs[*]} - 1 ))
 for j in $(seq 0 $pos1); do
-	a="$left_in""${IPs[$j]}""$right_in"
-	if (( $j < $pos1 )); then
-		nodes="$nodes""$a"","
-	else
-		nodes="$nodes""$a"
-	fi
+    a="$left_in""${IPs[$j]}""$right_in"
+    if (( $j < $pos1 )); then
+        nodes="$nodes""$a"","
+    else
+        nodes="$nodes""$a"
+    fi
 done
 
 # Edit the current manifest:

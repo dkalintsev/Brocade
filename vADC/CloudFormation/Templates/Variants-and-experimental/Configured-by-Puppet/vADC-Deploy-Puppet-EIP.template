@@ -647,8 +647,12 @@
                 "command" : "echo \"rest!enabled     Yes\" >> /opt/zeus/zxtm/conf/settings.cfg"
               },
 
-              "03-enable_autofailover" : {
-                "command" : "sed -i -e \"s/\\(flipper\\!autofailback\\).*/\\1     Yes/g\" /opt/zeus/zxtm/conf/settings.cfg"
+              "03-enable_autofailover_1" : {
+                "command" : "sed -i -e \"s/flipper.autofailback.*/d\" /opt/zeus/zxtm/conf/settings.cfg"
+              },
+
+              "04-enable_autofailover_2" : {
+                "command" : "echo 'flipper!autofailback     Yes' >> /opt/zeus/zxtm/conf/settings.cfg"
               },
 
               "99-wait_3_mins_then_signal_that_we_are_done" : {
