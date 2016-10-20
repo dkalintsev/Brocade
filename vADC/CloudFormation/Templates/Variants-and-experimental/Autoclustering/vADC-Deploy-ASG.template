@@ -649,7 +649,7 @@
                   "#!/bin/bash\n",
                   "echo \"developer_mode_accepted     yes\" >> /opt/zeus/zxtm/global.cfg\n",
                   "echo \"rest!enabled     Yes\" >> /opt/zeus/zxtm/conf/settings.cfg\n",
-                  "sed -i -e \"s/flipper.autofailback.*/d\" /opt/zeus/zxtm/conf/settings.cfg\n",
+                  "sed -i -e \"/flipper.autofailback/d\" /opt/zeus/zxtm/conf/settings.cfg\n",
                   "echo 'flipper!autofailback     Yes' >> /opt/zeus/zxtm/conf/settings.cfg\n",
                   "cd /tmp\n",
                   "curl \"https://s3.amazonaws.com/aws-cli/awscli-bundle.zip\" -o \"awscli-bundle.zip\"\n",

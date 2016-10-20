@@ -36,6 +36,10 @@ statusJoining="Joining"
 # Value for Elections
 statusForming="Forming"
 
+# Random string for /tmp files
+rand_str=$(cat /dev/urandom | env LC_CTYPE=C tr -cd 'a-f0-9' | head -c 10)
+
+
 if [[ "$verbose" == "" ]]; then
     # there's no such thing as too much logging ;)
     verbose="Yes"
@@ -65,7 +69,30 @@ logMsg () {
 }
 
 safe_aws () {
-    
+    errCode=1
+    backoff=1
+    multiplier=2
+    resFName="/tmp/aws-out.$rand_str"
+    while [[ "$errCode" != "0" ]]; do
+        if (( $backoff > 32 )); then
+            # Exceeded backoff budget of 64 seconds; giving up for now.
+            return 1
+        fi
+        rm -f $resFName
+        aws $* > $resFName 2>&1
+        errCode=$?
+        if [[ "$errCode" != "0" ]]; then
+            sleep $backoff
+            let "backoff =* multiplier"
+        fi
+        # Now let's validate that our result file is a valid JSON, and keep repeating if not.
+        if [[ "$errCode" == 0 ]]; then
+            jq '.' $resFName > /dev/null 2>&1
+            errCode=$?
+        fi
+    done
+    cat $resFName
+    rm -f $resFName
 }
 
 # Set tag on $myInstanceID
@@ -236,7 +263,6 @@ joinCluster () {
         logMsg "024: Picked the node to join: \"$node\""
         logMsg "025: Creating and running cluster join script"
         # doing join
-        rand_str=$(cat /dev/urandom | env LC_CTYPE=C tr -cd 'a-f0-9' | head -c 10)
         tmpf="/tmp/dojoin.$rand_str"
         rm -f $tmpf
         cat > $tmpf << EOF
