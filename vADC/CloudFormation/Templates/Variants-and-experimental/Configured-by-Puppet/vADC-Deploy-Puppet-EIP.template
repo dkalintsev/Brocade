@@ -1036,7 +1036,7 @@
                   "    -p ", "WebPool",
                   "    -t ", { "Fn::Join": [ "-", [ { "Ref" : "AWS::StackName" }, "WebServer" ]] }, "\n",
                   "if [[ \"$?\" == \"10\" ]]; then\n",
-                  "  puppet apply example.pp > /dev/null 2>&1\n",
+                  "  puppet apply example.pp > /var/log/puppet-out.log 2>&1\n",
                   "  if [[ \"$?\" != \"0\" ]]; then\n",
                   "    echo \"Something went wrong with puppet run at $(date)\" >> /root/puppetrun.log\n",
                   "    exit 1\n",
@@ -1081,7 +1081,7 @@
           "sleep 60\n",
           "cd /root\n",
           "rm -f crtab.txt\n",
-          "echo \"*/5 * * * * /root/puppet-apply.sh > /dev/null 2>&1\" > crtab.txt\n",
+          "echo \"*/5 * * * * /root/puppet-apply.sh > /var/log/puppet-apply-out.log 2>&1\" > crtab.txt\n",
           "crontab crtab.txt\n",
           "rm -f crtab.txt\n"
         ]]}},

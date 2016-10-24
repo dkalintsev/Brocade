@@ -662,7 +662,7 @@
                   "mkdir -p /opt/aws\n",
                   "mv /tmp/housekeeper.sh /opt/aws/\n",
                   "rm -f /tmp/ctab.txt\n",
-                  "echo \"*/5 * * * * /opt/aws/housekeeper.sh > /dev/null 2>&1\" > /tmp/ctab.txt\n",
+                  "echo \"*/5 * * * * /opt/aws/housekeeper.sh > /var/log/housekeeper-out.log 2>&1\" > /tmp/ctab.txt\n",
                   "exit 0\n",
                   "\n"
                 ]]},
@@ -684,7 +684,7 @@
               },
 
               "03-run_autocluster" : {
-                "command" : "/tmp/autocluster.sh"
+                "command" : "/tmp/autocluster.sh > /tmp/autocluster-out.log 2>&1"
               },
 
               "04-del_autocluster_script" : {
