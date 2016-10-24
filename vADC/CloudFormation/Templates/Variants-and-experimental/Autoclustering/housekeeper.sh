@@ -68,21 +68,21 @@ if [[ "$verbose" == "" ]]; then
 fi
 
 if [[ -f $lockF ]]; then
-    logMsg "032: Found lock file, exiting."
+    logMsg "001: Found lock file, exiting."
     exit 1
 fi
 
 # We need jq, which should have been installed by now.
 which jq >/dev/null 2>&1
 if [[ "$?" != "0" ]]; then
-    logMsg "001: Looks like jq isn't installed; quiting."
+    logMsg "002: Looks like jq isn't installed; quiting."
     exit 1
 fi
 
 # We also need aws cli tools.
 which aws >/dev/null 2>&1
 if [[ "$?" != "0" ]]; then
-    logMsg "002: Looks like AWS CLI tools isn't installed; quiting."
+    logMsg "003: Looks like AWS CLI tools isn't installed; quiting."
     exit 1
 fi
 
@@ -104,7 +104,7 @@ safe_aws () {
             # Doing random sleep up to 45 sec, then back to try again.
             backoff=$RANDOM
             let "backoff %= 45"
-            logMsg "044: safe_aws \"$*\" exceeded retry budget. Sleeping for $backoff second(s), then back to work.."
+            logMsg "004: safe_aws \"$*\" exceeded retry budget. Sleeping for $backoff second(s), then back to work.."
             sleep $backoff            
             retries=0
             backoff=1
@@ -112,7 +112,7 @@ safe_aws () {
         aws $* > $resFName 2>&1
         errCode=$?
         if [[ "$errCode" != "0" ]]; then
-            logMsg "043: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
+            logMsg "005: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
             sleep $backoff
             let "retries += 1"
         fi
@@ -129,7 +129,7 @@ safe_aws () {
 # $2 = value
 #
 setTag () {
-    logMsg "002: Setting tags on $myInstanceID: \"$1:$2\""
+    logMsg "006: Setting tags on $myInstanceID: \"$1:$2\""
     safe_aws ec2 create-tags --region $region \
         --resources $myInstanceID \
         --tags Key=$1,Value=$2
@@ -139,11 +139,11 @@ setTag () {
     while [[ ${#stList[*]} == 0 ]]; do
         findTaggedInstances $1 $2
         stList=( $(cat $jqResFName | grep "$myInstanceID") )
-        logMsg "003: Checking tagged instances \"$1:$2\", expecting to see $myInstanceID; got \"$stList\""
+        logMsg "007: Checking tagged instances \"$1:$2\", expecting to see $myInstanceID; got \"$stList\""
         if [[ ${#stList[*]} == 1 ]]; then
-            logMsg "004: Found us, we're done."
+            logMsg "008: Found us, we're done."
         else
-            logMsg "005: Not yet; sleeping for a bit."
+            logMsg "009: Not yet; sleeping for a bit."
             sleep 3
         fi
     done
@@ -155,7 +155,7 @@ setTag () {
 # $2 = value (need for success checking)
 #
 delTag () {
-    logMsg "006: Deleting tags: \"$1:$2\""
+    logMsg "010: Deleting tags: \"$1:$2\""
     safe_aws ec2 delete-tags --region $region \
         --resources $myInstanceID \
         --tags Key=$1
@@ -165,11 +165,11 @@ delTag () {
     while [[ ${#stList[*]} > 0 ]]; do
         findTaggedInstances $1 $2
         stList=( $(cat $jqResFName | grep "$myInstanceID") )
-        logMsg "007: Checking tagged instances \"$1:$2\", expecting NOT to see $myInstanceID; got \"$stList\""
+        logMsg "011: Checking tagged instances \"$1:$2\", expecting NOT to see $myInstanceID; got \"$stList\""
         if [[ ${#stList[*]} == 0 ]]; then
-            logMsg "008: Tag \"$1:$2\" is not there, we're done."
+            logMsg "012: Tag \"$1:$2\" is not there, we're done."
         else
-            logMsg "009: Not yet; sleeping for a bit."
+            logMsg "013: Not yet; sleeping for a bit."
             sleep 3
         fi
     done
@@ -209,23 +209,23 @@ getLock () {
         # Get a list of instances with $stateTag = $tag other than us
         # if there are any, wait 5 seconds, then retry until there are none
         while [[ ${#list[*]} > 0 ]]; do
-            logMsg "010: Looping until there's no instance matching \"$1:$2\""
+            logMsg "014: Looping until there's no instance matching \"$1:$2\""
             findTaggedInstances $1 $2
             list=( $(cat $jqResFName | grep -v $myInstanceID) )
             if [[ ${#list[*]} > 0 ]]; then
                 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-                logMsg "011: Found some: \"$s_list\", sleeping..."
+                logMsg "015: Found some: \"$s_list\", sleeping..."
                 sleep 5
             fi
         done
         # Do we already have the tag by chance?
         list=( $(cat $jqResFName | grep "$myInstanceID") )
         if [[ ${#list[*]} == 1 ]]; then
-            logMsg "042: We already have that tag, returning."
+            logMsg "016: We already have that tag, returning."
             return 0
         fi        
         # once there aren't any, tag ourselves
-        logMsg "012: Tagging ourselves: \"$1:$2\""
+        logMsg "017: Tagging ourselves: \"$1:$2\""
         setTag $1 $2
         list=( blah )
         # check if there are other tagged instances who managed to beat us to it
@@ -233,20 +233,20 @@ getLock () {
             findTaggedInstances $1 $2
             list=( $(cat $jqResFName | grep -v "$myInstanceID") )
             s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-            logMsg "013: Looking for others with the same tags, found: \"$s_list\""
+            logMsg "018: Looking for others with the same tags, found: \"$s_list\""
             if [[ ${#list[*]} > 0 ]]; then
                 # there's someone else - clash
-                logMsg "014: Clash detected, calling delTag: \"$1:$2\""
+                logMsg "019: Clash detected, calling delTag: \"$1:$2\""
                 delTag $1 $2
                 backoff=$RANDOM
                 let "backoff %= 25"
                 # do random backoff, then bail to the mail while().
-                logMsg "015: Backing off for $backoff seconds"
+                logMsg "020: Backing off for $backoff seconds"
                 sleep $backoff
                 unset list
             else
                 # lock obtained; we're done here.
-                logMsg "016: Got our lock, returning."
+                logMsg "021: Got our lock, returning."
                 return 0
             fi
         done
@@ -257,7 +257,7 @@ getLock () {
 #
 backoff=$RANDOM
 let "backoff %= 25"
-logMsg "018: Running initial backoff for $backoff seconds"
+logMsg "022: Running initial backoff for $backoff seconds"
 sleep $backoff
 
 cleanup
@@ -267,35 +267,35 @@ declare -a list
 findTaggedInstances $housekeeperTag $statusWorking
 list=( $(cat $jqResFName | grep -v $myInstanceID) )
 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-logMsg "019: Checking if an other node is already running Housekeeping; got: \"$s_list\""
+logMsg "023: Checking if an other node is already running Housekeeping; got: \"$s_list\""
 if [[ ${#list[*]} > 0 ]]; then
-    logMsg "020: Yep, somebody beat us to it. Exiting."
+    logMsg "024: Yep, somebody beat us to it. Exiting."
     exit 0
 else
-    logMsg "021: Ok, let's get to work."
+    logMsg "025: Ok, let's get to work."
 fi
 
-logMsg "022: Getting lock on $statusWorking.."
+logMsg "026: Getting lock on $statusWorking.."
 getLock "$housekeeperTag" "$statusWorking"
 
 # List running instances in our vADC cluster
-logMsg "023: Checking running instances.."
+logMsg "027: Checking running instances.."
 findTaggedInstances
 cat $jqResFName | sort -rn > $runningInstF
 # Sanity check - we should see ourselves in the $jqResFName
 list=( $(cat $jqResFName | grep "$myInstanceID") )
 if [[ ${#list[*]} == 0 ]]; then
     # LOL WAT
-    logMsg "041: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
+    logMsg "028: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
     exit 1
 fi
 
 # Go to cluster config dir, and look for instanceIDs in config files there
-logMsg "024: Checking clustered instances.."
+logMsg "029: Checking clustered instances.."
 cd $configDir
 grep -i instanceid * | awk '{print $2}' | sort -rn | uniq > $clusteredInstF
 # Compare the two, looking for lines that are present in the cluster config but missing in running list
-logMsg "025: Comparing list of running and clustered instances.."
+logMsg "030: Comparing list of running and clustered instances.."
 diff $clusteredInstF $runningInstF | awk '/^</ { print $2 }' > $deltaInstF
 # Check if our InstanceId is in the list of running
 # ***************
@@ -305,7 +305,7 @@ if [[ -s $deltaInstF ]]; then
     declare -a list
     list=( $(cat $deltaInstF) )
     s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-    logMsg "026: Delta detected - need to do clean up the following instances: $s_list."
+    logMsg "031: Delta detected - need to do clean up the following instances: $s_list."
     for instId in ${list[@]}; do
         grep -l "$instId" * >> $filesF 2>/dev/null
     done
@@ -315,20 +315,20 @@ if [[ -s $deltaInstF ]]; then
         files=( $(cat $filesF) )
         IFS=$svIFS
         for file in "${files[@]}"; do
-            logMsg "027: Deleting $file.."
+            logMsg "032: Deleting $file.."
             rm -f "$file"
         done
-        logMsg "028: Synchronising cluster state and sleeping to let things settle.."
+        logMsg "033: Synchronising cluster state and sleeping to let things settle.."
         $configSync
         sleep 60
-        logMsg "029: All done, exiting."
+        logMsg "034: All done, exiting."
     else
-        logMsg "030: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
+        logMsg "035: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
     fi
     delTag "$housekeeperTag" "$statusWorking"
     exit 0
 else
-    logMsg "031: No delta, exiting."
+    logMsg "036: No delta, exiting."
     delTag "$housekeeperTag" "$statusWorking"
     exit 0    
 fi
