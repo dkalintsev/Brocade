@@ -96,6 +96,7 @@ if [[ "$debug" == "0" ]]; then
     while [[ "$errCode" != "0" ]]; do
         if (( $backoff > 64 )); then
             echo "Exceeded backoff budget of 64 seconds; giving up for now."
+            rm -f $resFName
             exit 1
         fi
         rm -f $resFName

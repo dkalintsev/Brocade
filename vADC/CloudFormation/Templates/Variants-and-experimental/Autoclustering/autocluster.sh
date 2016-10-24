@@ -285,16 +285,16 @@ runElections () {
 #
 joinCluster () {
     logMsg "021: Starting cluster join.."
-    declare -a list
+    declare -a jList
     # Are there instances where $stateTag == $statusActive?
     # There should be since this is how we got here, but let's make double sure.
-    # Main loop alredy did findTaggedInstances, so let's reuse result.
-    list=( $(cat $jqResFName) )
+    # Main loop already did findTaggedInstances, so let's reuse result.
+    jList=( $(cat $jqResFName) )
     logMsg "023: Getting lock on $stateTag $statusJoining"
     getLock "$stateTag" "$statusJoining"
     num=$RANDOM
-    let "num %= ${#list[*]}"
-    instanceToJoin=${list[$num]}
+    let "num %= ${#jList[*]}"
+    instanceToJoin=${jList[$num]}
     node=$(getInstanceIP $instanceToJoin)
     logMsg "024: Picked the node to join: \"$node\""
     logMsg "025: Creating and running cluster join script"
