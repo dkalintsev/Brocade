@@ -50,10 +50,17 @@ lockF=/tmp/housekeeper.lock
 cleanup  () {
     rm -f $runningInstF $clusteredInstF $deltaInstF $filesF
     rm -f $resFName $jqResFName
-    rf -f $lockF
+    rm -f $lockF
 }
 
 trap cleanup EXIT
+
+logMsg () {
+    if [[ "$verbose" =~ ^[Yy] ]]; then
+        ts=$(date -u +%FT%TZ)
+        echo "$ts $0[$$]: $*" >> $logFile
+    fi
+}
 
 if [[ "$verbose" == "" ]]; then
     # there's no such thing as too much logging ;)
@@ -80,13 +87,6 @@ if [[ "$?" != "0" ]]; then
 fi
 
 myInstanceID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-
-logMsg () {
-    if [[ "$verbose" =~ ^[Yy] ]]; then
-        ts=$(date -u +%FT%TZ)
-        echo "$ts $0[$$]: $*" >> $logFile
-    fi
-}
 
 # Execute AWS CLI command "safely": if error occurs - backoff exponentially
 # If succeeded - return 0 and save output, if any, in $resFName
@@ -288,7 +288,7 @@ if [[ ${#list[*]} == 0 ]]; then
     # LOL WAT
     logMsg "041: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
     exit 1
-else
+fi
 
 # Go to cluster config dir, and look for instanceIDs in config files there
 logMsg "024: Checking clustered instances.."

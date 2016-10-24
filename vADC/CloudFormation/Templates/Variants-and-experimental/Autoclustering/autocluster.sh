@@ -46,6 +46,19 @@ if [[ "$verbose" == "" ]]; then
     verbose="Yes"
 fi
 
+cleanup  () {
+    rm -f $resFName $jqResFName
+}
+
+trap cleanup EXIT
+
+logMsg () {
+    if [[ "$verbose" =~ ^[Yy] ]]; then
+        ts=$(date -u +%FT%TZ)
+        echo "$ts $0[$$]: $*" >> $logFile
+    fi
+}
+
 # We need jq, which should have been installed by now.
 which jq >/dev/null 2>&1
 if [[ "$?" != "0" ]]; then
@@ -66,20 +79,6 @@ let "backoff %= 30"
 sleep $backoff
 
 myInstanceID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-
-cleanup  () {
-    rm -f $resFName $jqResFName
-}
-
-trap cleanup EXIT
-
-logMsg () {
-    if [[ "$verbose" =~ ^[Yy] ]]; then
-        ts=$(date -u +%FT%TZ)
-        echo "$ts $0[$$]: $*" >> $logFile
-    fi
-}
-
 # Execute AWS CLI command "safely": if error occurs - backoff exponentially
 # If succeeded - return 0 and save output, if any, in $resFName
 # Given this script runs once only, the "failure isn't an option".
@@ -295,7 +294,8 @@ joinCluster () {
     num=$RANDOM
     let "num %= ${#jList[*]}"
     instanceToJoin=${jList[$num]}
-    node=$(getInstanceIP $instanceToJoin)
+    getInstanceIP $instanceToJoin
+    node=$(cat $jqResFName)
     logMsg "024: Picked the node to join: \"$node\""
     logMsg "025: Creating and running cluster join script"
     # doing join
