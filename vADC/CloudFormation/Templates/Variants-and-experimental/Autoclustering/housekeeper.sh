@@ -12,12 +12,14 @@
 # ClusterID = AWS EC2 tag used to find vADC instances in our cluster
 # Region = AWS::Region
 # Verbose = "Yes|No" - this controls whether we print extensive log messages as we go.
-# vADCFQDN = "[FQDN]" - optional FQDN for vADC cluster, maintained by Route53
+# vADCFQDN = "[FQDN]" - optional managament FQDN for vADC cluster, maintained by Route53
 #
 # vADC instances running this script will need to have an IAM Role with the Policy allowing:
 # - ec2:DescribeInstances
 # - ec2:CreateTags
 # - ec2:DeleteTags
+# - route53:ListResourceRecordSets
+# - route53:ChangeResourceRecordSets
 #
 export PATH=$PATH:/usr/local/bin
 logFile="/var/log/housekeeper.log"
@@ -326,9 +328,87 @@ if [[ -s $deltaInstF ]]; then
         logMsg "035: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
     fi
     delTag "$housekeeperTag" "$statusWorking"
-    exit 0
 else
     logMsg "036: No delta, exiting."
     delTag "$housekeeperTag" "$statusWorking"
-    exit 0    
+fi
+
+# Make sure this instance has enough private IP addresses - as many as there are
+# vADC nodes in the cluster
+
+# If we pushed config, $configDir may be different from what it was before
+# Let's "cd" into it again
+cd $configDir
+
+# Let's assume that the number of clustered vADCs = number of config files in $configDir
+numvADCS=$(ls -1 | wc -l | awk '{print $1}')
+
+# Get a JSON for ourselves in $resFName
+safe_aws ec2 describe-instances --region $region \
+    --instance-id $myInstanceID --output json
+
+myLocalIP=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
+
+# What's the ENI of my eth0? We'll need it to add/remove private IPs.
+# Find .NetworkInterfaces where .PrivateIpAddresses[].PrivateIpAddress = $myLocalIP,
+# then extract the .NetworkInterfaceId
+eniID=$(cat $resFName | \
+    jq -r ".Reservations[].Instances[].NetworkInterfaces[] | \
+    select(.PrivateIpAddresses[].PrivateIpAddress==\"$myLocalIP\") | \
+    .NetworkInterfaceId")
+
+# Let's see how many secondary IP addresses I already have
+declare -a myPrivateIPs
+myPrivateIPs=( $(cat $resFName | \
+    jq -r ".Reservations[].Instances[].NetworkInterfaces[] | \
+    select(.NetworkInterfaceId==\"$eniID\") | \
+    .PrivateIpAddresses[] | \
+    select(.Primary==false) | \
+    .PrivateIpAddress") )
+
+if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
+    # There's a difference; we need to adjust
+    logMsg "037: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numvADCS"
+    if (( $numvADCS > ${#myPrivateIPs[*]} )); then
+        # Need to add IPs
+        let "delta = $numvADCS - ${#myPrivateIPs[*]}"
+        logMsg "038: Adding $delta private IPs to ENI $eniID"
+        safe_aws ec2 assign-private-ip-addresses \
+            --region $region \
+            --network-interface-id $eniID \
+            --secondary-private-ip-address-count $delta
+    else
+        # Need to remove IPs
+        # First let's find out which one(s) don't have EIP associated, as we can only remove those.
+        declare -a myFreePrivateIPs
+        myFreePrivateIPs=( $(cat $resFName | \
+            jq -r ".Reservations[].Instances[].NetworkInterfaces[] | \
+            select(.NetworkInterfaceId==\"$eniID\") | \
+            .PrivateIpAddresses[] | \
+            select(.Primary==false) | \
+            select (.Association.PublicIp==null) | \
+            .PrivateIpAddress") )
+        let "delta = ${#myPrivateIPs[*]} - $numvADCS"
+        # If we need to remove more IPs than we have without EIPs, then only remove those we can
+        if (( $delta > ${#myFreePrivateIPs[*]} )); then
+            logMsg "039: Need to delete $delta, but can only do ${#myFreePrivateIPs[*]}; the rest is tied with EIPs."
+            delta=${#myFreePrivateIPs[*]}
+        fi
+        for ((i=0; i < $delta; i++)); do
+            num=$RANDOM
+            let "num %= ${#myFreePrivateIPs[*]}"
+            ipToDelete=${myFreePrivateIPs[$num]}
+            let "j = i + 1"
+            logMsg "040: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
+            # Not using "safe_aws" here; it's OK to fail - we'll just retry next time round.
+            aws ec2 unassign-private-ip-addresses \
+                --region $region \
+                --network-interface-id $eniID \
+                --private-ip-addresses $ipToDelete
+            sleep 3
+        done
+    fi
+    logMsg "041: Done adjusting private IPs."
+else
+    logMsg "042: No need to adjust private IPs."
 fi
