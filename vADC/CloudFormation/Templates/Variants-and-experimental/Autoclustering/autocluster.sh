@@ -185,7 +185,7 @@ findTaggedInstances () {
     # Run describe-instances and make sure we get valid JSON (which includes empty file)
     safe_aws ec2 describe-instances --region $region \
         --filters $filter --output json
-    cat $resFName | jq -r ".Reservations[] | .Instances[] | .InstanceId" > $jqResFName
+    cat $resFName | jq -r ".Reservations[].Instances[].InstanceId" > $jqResFName
     return 0
 }
 
@@ -195,7 +195,7 @@ findTaggedInstances () {
 getInstanceIP () {
     safe_aws ec2 describe-instances --region $region \
         --instance-id $1 --output json
-    cat $resFName | jq -r ".Reservations[] | .Instances[] | .NetworkInterfaces[] | .PrivateIpAddress" > $jqResFName
+    cat $resFName | jq -r ".Reservations[].Instances[].NetworkInterfaces[].PrivateIpAddress" > $jqResFName
     return 0
 }
 

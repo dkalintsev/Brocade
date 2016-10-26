@@ -6,6 +6,8 @@
 #
 # The purpose of this script is to perform housekeeping on a running vADC cluster:
 # - Remove vADC nodes that aren't in "running" state
+# - Add or remove secondary private IPs to vADC node to match number of vADCs in the cluster
+#   * this is to help deal with Traffic IPs as each EIP needs a secondary private IP
 # - Make sure there's an A record in Route53 for each vADC's public IP, if "{{vADCFQDN}}" is specified
 #
 # We expect the following vars passed in:
@@ -196,7 +198,7 @@ findTaggedInstances () {
     # Run describe-instances and make sure we get valid JSON (which includes empty file)
     safe_aws ec2 describe-instances --region $region \
         --filters $filter --output json
-    cat $resFName | jq -r ".Reservations[] | .Instances[] | .InstanceId" > $jqResFName
+    cat $resFName | jq -r ".Reservations[].Instances[].InstanceId" > $jqResFName
     return 0
 }
 
@@ -333,14 +335,16 @@ else
     delTag "$housekeeperTag" "$statusWorking"
 fi
 
-# Make sure this instance has enough private IP addresses - as many as there are
+# Make sure this instance has the right number of private IP addresses - as many as there are
 # vADC nodes in the cluster
 
 # If we pushed config, $configDir may be different from what it was before
 # Let's "cd" into it again
 cd $configDir
 
-# Let's assume that the number of clustered vADCs = number of config files in $configDir
+# Let's assume that the number of clustered vADCs = number of config files in $configDir,
+# since we've just did a clean-up above.
+#
 numvADCS=$(ls -1 | wc -l | awk '{print $1}')
 
 # Get a JSON for ourselves in $resFName
@@ -366,6 +370,7 @@ myPrivateIPs=( $(cat $resFName | \
     select(.Primary==false) | \
     .PrivateIpAddress") )
 
+# Compare the number of my private IPs with the number of vADCs in my cluster
 if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
     # There's a difference; we need to adjust
     logMsg "037: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numvADCS"
@@ -400,7 +405,7 @@ if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
             ipToDelete=${myFreePrivateIPs[$num]}
             let "j = i + 1"
             logMsg "040: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
-            # Not using "safe_aws" here; it's OK to fail - we'll just retry next time round.
+            # Not using "safe_aws" here; it's OK to fail - we'll just retry the next time round.
             aws ec2 unassign-private-ip-addresses \
                 --region $region \
                 --network-interface-id $eniID \
