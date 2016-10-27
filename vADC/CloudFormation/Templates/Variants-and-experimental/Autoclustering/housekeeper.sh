@@ -450,13 +450,13 @@ safe_aws route53 list-resource-record-sets \
 #
 cat $resFName | \
     jq -r ".ResourceRecordSets[] | \
-    select(.Type==\"A\" and .Name==\"$vADCFQDN\") | \
+    select(.Type==\"A\" and .Name==\"$MyFQDN\") | \
     .ResourceRecords[].Value" | sort -rn > $dnsIPs
 
 # Get description of running vADCs in my cluster
 #
 logMsg "044: Querying running vADC instances.."
-safe_aws ec2 describe-instances --region $region --output json
+findTaggedInstances
 
 # Parse the output: find Network Interface 0, list it's Public IP
 #
@@ -482,7 +482,7 @@ list=( $(cat $activeIPs) )
 rrs=""
 pos=$(( ${#list[*]} - 1 ))
 for j in $(seq 0 $pos); do
-    a="{ \"Value\": \"${list[$j]}\"}"
+    a="{ \"Value\": \"${list[$j]}\" }"
     if (( $j < $pos )); then
         rrs="$rrs""$a"","
     else
