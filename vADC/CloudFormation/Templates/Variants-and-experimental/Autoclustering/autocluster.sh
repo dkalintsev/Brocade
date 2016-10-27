@@ -40,6 +40,7 @@ statusForming="Forming"
 rand_str=$(cat /dev/urandom | env LC_CTYPE=C tr -cd 'a-f0-9' | head -c 10)
 resFName="/tmp/aws-out.$rand_str"
 jqResFName="/tmp/jq-out.$rand_str"
+awscliLogF="autocluster-out.log"
 
 if [[ "$verbose" == "" ]]; then
     # there's no such thing as too much logging ;)
@@ -100,7 +101,7 @@ safe_aws () {
             retries=0
             backoff=1
         fi
-        aws $* > $resFName 2>&1
+        aws $* > $resFName 2>>$awscliLogF
         errCode=$?
         if [[ "$errCode" != "0" ]]; then
             logMsg "004: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
@@ -342,7 +343,7 @@ MAIN: {
 EOF
     chmod +x $tmpf
     sleep 30
-    $tmpf
+    $tmpf >> $awscliLogF 2>&1
     if [[ "$?" != "0" ]]; then
         logMsg "029: Some sort of error happened, let's keep trying.."
         rm -f $tmpf

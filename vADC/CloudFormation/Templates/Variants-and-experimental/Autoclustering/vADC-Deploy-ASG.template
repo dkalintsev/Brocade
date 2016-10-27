@@ -172,7 +172,7 @@
       "Type": "String",
       "Default": "corp.local",
       "AllowedPattern" : "[\\-a-zA-Z0-9\\.]*",
-      "Description": "Domain name for the vADC Cluster management access. Template will create a Route53 HostedZone for this domain. Each vADCs will add an A-record for with its own public management IP address pointing to mgmt.<this_domain>.",
+      "Description": "Domain name for the vADC Cluster management access. Template will create a Route53 HostedZone for this domain. Each vADCs will add an A-record for with its own public management IP address pointing to vadc-mgmt.<this_domain>.",
       "ConstraintDescription": "Please use letters, numbers, and dashes only."
     }
 
@@ -636,10 +636,12 @@
                   ]]},
                   "Region":  { "Ref": "AWS::Region" },
                   "Verbose": "Yes",
-                  "vADCFQDN":  { "Fn::Join": [ ".", [
-                    "mgmt",
-                    { "Ref": "ClusterDomain" }
-                  ]]}
+                  "vADCFQDN":  { "Fn::Join": [ "", [
+                    "vadc-mgmt.",
+                    { "Ref": "ClusterDomain" },
+                    "."
+                  ]]},
+                  "R53ZoneID":  { "Ref": "DNS" }
                 },
                 "mode": "000755",
                 "owner": "root"
@@ -778,8 +780,35 @@
           "Ref": "ClusterDomain"
         }
       }
-    }    
-  
+    },
+
+    "AppDNSRecord1" : {
+      "Type" : "AWS::Route53::RecordSetGroup",
+      "Properties" : {
+        "HostedZoneId" : {
+          "Ref" : "DNS"
+        },
+        "Comment" : "Dummy seed record to allow CloudFormation delete stack later.",
+        "RecordSets" : [
+          {
+            "Name": {
+              "Fn::Join": [ "", [
+                "vadc-mgmt.",
+                { "Ref": "ClusterDomain" },
+                "."
+              ]]
+            },
+            "Type": "A",
+            "TTL": "900",
+            "ResourceRecords": [
+              "127.0.0.1"
+            ]
+          }
+        ]
+      }
+    }
+
+
   },
 
   "Outputs": {

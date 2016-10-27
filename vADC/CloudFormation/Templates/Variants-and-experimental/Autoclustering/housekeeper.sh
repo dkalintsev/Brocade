@@ -15,6 +15,7 @@
 # Region = AWS::Region
 # Verbose = "Yes|No" - this controls whether we print extensive log messages as we go.
 # vADCFQDN = "[FQDN]" - optional managament FQDN for vADC cluster, maintained by Route53
+# R53ZoneID = Route53 Zone ID to maintain the vADCFQDN in
 #
 # vADC instances running this script will need to have an IAM Role with the Policy allowing:
 # - ec2:DescribeInstances
@@ -32,6 +33,7 @@ clusterID="{{ClusterID}}"
 region="{{Region}}"
 verbose="{{Verbose}}"
 MyFQDN="{{vADCFQDN}}"
+R53ZoneID="{{R53ZoneID}}"
 
 # Tag for Housekeeping
 housekeeperTag="HousekeepingState"
@@ -48,12 +50,17 @@ deltaInstF="/tmp/delta.$rand_str"
 filesF="/tmp/files.$rand_str"
 resFName="/tmp/aws-out.$rand_str"
 jqResFName="/tmp/jq-out.$rand_str"
+awscliLogF="housekeeper-out.log"
+dnsIPs="/tmp/dnsIPs.$rand_str"
+activeIPs="/tmp/activeIPs.$rand_str"
+changeSetF="/tmp/changeSetF.$rand_str"
 
 lockF=/tmp/housekeeper.lock
 
 cleanup  () {
     rm -f $runningInstF $clusteredInstF $deltaInstF $filesF
     rm -f $resFName $jqResFName
+    rm -f $dnsIPs $activeIPs $changeSetF
     rm -f $lockF
 }
 
@@ -113,7 +120,7 @@ safe_aws () {
             retries=0
             backoff=1
         fi
-        aws $* > $resFName 2>&1
+        aws $* > $resFName 2>>$awscliLogF
         errCode=$?
         if [[ "$errCode" != "0" ]]; then
             logMsg "005: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
@@ -335,6 +342,9 @@ else
     delTag "$housekeeperTag" "$statusWorking"
 fi
 
+#
+# *****************************************************************************
+#
 # Make sure this instance has the right number of private IP addresses - as many as there are
 # vADC nodes in the cluster
 
@@ -409,7 +419,7 @@ if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
             aws ec2 unassign-private-ip-addresses \
                 --region $region \
                 --network-interface-id $eniID \
-                --private-ip-addresses $ipToDelete
+                --private-ip-addresses $ipToDelete 2>>$awscliLogF
             sleep 3
         done
     fi
@@ -417,3 +427,93 @@ if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
 else
     logMsg "042: No need to adjust private IPs."
 fi
+
+#
+# *****************************************************************************
+#
+# Update $MyFQDN so it points to the public IPs of the running vADCs
+# This is to help with management access to admin interface of vADC cluster
+#
+
+if [[ "$MyFQDN" == "" || "$R53ZoneID" == "" ]]; then
+    # FQDN or R53ZoneID was not specified, no need to do anything.
+    exit 0
+fi
+
+# Get list of A records already in DNS
+#
+logMsg "043: Checking what's already in DNS zone $R53ZoneID.."
+safe_aws route53 list-resource-record-sets \
+    --hosted-zone-id $R53ZoneID --output json
+#
+# Parse the result to get the IPs by matching on record type "A" + $vADCFQDN
+#
+cat $resFName | \
+    jq -r ".ResourceRecordSets[] | \
+    select(.Type==\"A\" and .Name==\"$vADCFQDN\") | \
+    .ResourceRecords[].Value" | sort -rn > $dnsIPs
+
+# Get description of running vADCs in my cluster
+#
+logMsg "044: Querying running vADC instances.."
+safe_aws ec2 describe-instances --region $region --output json
+
+# Parse the output: find Network Interface 0, list it's Public IP
+#
+cat $resFName | \
+    jq -r ".Reservations[].Instances[].NetworkInterfaces[] | \
+    select(.Attachment.DeviceIndex==0) | \
+    .Association.PublicIp" | sort -rn > $activeIPs
+
+# Check if the contents are the same
+#
+diff $dnsIPs $activeIPs > /dev/null 2>&1
+if [[ "$?" == "0" ]]; then
+    Records match, nothing to do.
+    logMsg "045: Contents of DNS zone match public IPs of running instances, we're done."
+    exit 0
+fi
+
+# Looks like there's some difference; we need to update the DNS.
+# Let's create a JSON recordset file
+#
+logMsg "046: Difference detected; updating DNS records."
+list=( $(cat $activeIPs) )
+rrs=""
+pos=$(( ${#list[*]} - 1 ))
+for j in $(seq 0 $pos); do
+    a="{ \"Value\": \"${list[$j]}\"}"
+    if (( $j < $pos )); then
+        rrs="$rrs""$a"","
+    else
+        rrs="$rrs""$a"
+    fi
+done
+
+cat > $changeSetF <<EOF
+{
+  "Comment": "Auto-update by housekeeper process",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "$MyFQDN",
+        "Type": "A",
+        "TTL": 60,
+        "ResourceRecords": [
+            $rrs
+        ]
+      }
+    }
+  ]
+}
+EOF
+
+# No need to do safe_aws; if we fail - we'll just try again later.
+#
+aws route53 change-resource-record-sets
+    --hosted-zone-id $R53ZoneID
+    --change-batch file://$changeSetF >> $awscliLogF 2>&1
+
+logMsg "047: DNS update completed; AWS CLI error code: $?"
+exit 0
