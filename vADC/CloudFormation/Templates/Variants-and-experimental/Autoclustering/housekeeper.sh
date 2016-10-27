@@ -511,8 +511,8 @@ EOF
 
 # No need to do safe_aws; if we fail - we'll just try again later.
 #
-aws route53 change-resource-record-sets
-    --hosted-zone-id $R53ZoneID
+aws route53 change-resource-record-sets \
+    --hosted-zone-id $R53ZoneID \
     --change-batch file://$changeSetF >> $awscliLogF 2>&1
 
 logMsg "047: DNS update completed; AWS CLI error code: $?"
