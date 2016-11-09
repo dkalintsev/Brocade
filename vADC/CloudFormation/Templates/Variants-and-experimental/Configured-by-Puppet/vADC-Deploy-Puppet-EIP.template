@@ -81,17 +81,10 @@
     },
 
     "vADCVers" : {
-      "Description" : "Please select vADC version. This template deploys Developer Edition SKU. Note not all vADC versions are available in all regions, and some older versions may not be available, too.",
+      "Description" : "Please select vADC version:",
       "Type" : "String",
       "Default" : "110",
       "AllowedValues" : [
-        "98r1",
-        "98r2",
-        "99",
-        "99r1",
-        "100",
-        "101",
-        "102r1",
         "103",
         "103r1",
         "104",
@@ -139,7 +132,7 @@
     "AZs": {
       "Description": "List of Availability Zones where Private and Public subnet pairs will be created. Please select two.",
       "Type": "List<AWS::EC2::AvailabilityZone::Name>",
-      "ConstraintDescription": "Please select an AZ from a drop-down list."            
+      "ConstraintDescription": "Please select an AZ from a drop-down list."
     },
 
     "PublicSubnetCIDR1": {
@@ -165,7 +158,7 @@
       "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
       "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
     },
-    
+
     "PrivateSubnetCIDR2": {
       "Description": "This is a private subnet available for your instances in AZ2.",
       "Type": "String",
@@ -222,16 +215,16 @@
 
     "vADCAMI" : {
       "ap-south-1" : { "104" : "ami-1b1a7074", "110" : "ami-f9bcd696" },
-      "eu-west-1" : { "98r1" : "ami-dcb714ab", "98r2" : "ami-e455e193", "99" : "ami-55781f22", "99r1" : "ami-ead66f99", "100" : "ami-514c2c26", "101" : "ami-fa1d408d", "102r1" : "ami-d976d2aa", "103" : "ami-796bcb0a", "103r1" : "ami-33fa4140", "104" : "ami-b46ee8c7", "110" : "ami-4f0f963c" },
-      "ap-southeast-1" : { "98r1" : "ami-44b39416", "98r2" : "ami-a8b497fa", "99" : "ami-4e47751c", "99r1" : "ami-ddf931be", "100" : "ami-2a655878", "101" : "ami-bc444aee", "102r1" : "ami-64559407", "103" : "ami-7bb47718", "103r1" : "ami-357fb756", "104" : "ami-9c38f2ff", "110" : "ami-826bb8e1" },
-      "ap-southeast-2" : { "98r1" : "ami-71a2c04b", "98r2" : "ami-bbcea181", "99" : "ami-f393e1c9", "99r1" : "ami-135c7d70", "100" : "ami-91700dab", "101" : "ami-bfadee85", "102r1" : "ami-d5ffa6b6", "103" : "ami-16e5bd75", "103r1" : "ami-a2a687c1", "104" : "ami-b11734d2", "110" : "ami-983e16fb" },
-      "eu-central-1" : { "99r1" : "ami-64b5510b", "100" : "ami-68e2de75", "101" : "ami-68262175", "102r1" : "ami-29485545", "103" : "ami-496b7725", "103r1" : "ami-b318fcdc", "104" : "ami-685abc07", "110" : "ami-93dc34fc" },
-      "ap-northeast-2" : { "99r1" : "ami-7d6ea013", "103" : "ami-4b965825", "103r1" : "ami-c07db3ae", "104" : "ami-b1c70edf", "110" : "ami-3d4f8453" },
-      "ap-northeast-1" : { "98r1" : "ami-133e1412", "98r2" : "ami-2f241c2e", "99" : "ami-926e9792", "99r1" : "ami-20f1fd4e", "100" : "ami-08e12408", "101" : "ami-02803b02", "102r1" : "ami-9681acf8", "103" : "ami-48a98126", "103r1" : "ami-57484139", "104" : "ami-1264727c", "110" : "ami-b17480d0" },
-      "us-east-1" : { "98r1" : "ami-3a13a352", "98r2" : "ami-ba008ad2", "99" : "ami-f6417d9e", "99r1" : "ami-f9fac293", "100" : "ami-e6a69c8e", "101" : "ami-a9b912c2", "102r1" : "ami-38cc8d52", "103" : "ami-2f0a4245", "103r1" : "ami-38323652", "104" : "ami-49151e23", "110" : "ami-7f0bc812" },
-      "sa-east-1" : { "98r1" : "ami-0d71c410", "98r2" : "ami-7f833562", "99" : "ami-e752e8fa", "99r1" : "ami-cc2eaca0", "100" : "ami-f1a623ec", "101" : "ami-71de566c", "102r1" : "ami-f8b53094", "103" : "ami-1569ed79", "103r1" : "ami-10901d7c", "104" : "ami-1d3cb071", "110" : "ami-792ea415" },
-      "us-west-1" : { "98r1" : "ami-4deae108", "98r2" : "ami-25d5c360", "99" : "ami-6d0eed29", "99r1" : "ami-6b3c4f0b", "100" : "ami-03678547", "101" : "ami-fbdc22bf", "102r1" : "ami-01adc461", "103" : "ami-8ec9a1ee", "103r1" : "ami-3d97e45d", "104" : "ami-f296eb92", "110" : "ami-52397d32" },
-      "us-west-2" : { "98r1" : "ami-b5f7b585", "98r2" : "ami-85c48fb5", "99" : "ami-d56e45e5", "99r1" : "ami-576f8337", "100" : "ami-f790bac7", "101" : "ami-a7c5cf97", "102r1" : "ami-fccbd89d", "103" : "ami-ad0b17cc", "103r1" : "ami-97bf51f7", "104" : "ami-762cc616", "110" : "ami-913df9f1" }
+      "eu-west-1" : { "103" : "ami-796bcb0a", "103r1" : "ami-33fa4140", "104" : "ami-b46ee8c7", "110" : "ami-4f0f963c" },
+      "ap-northeast-2" : { "103" : "ami-4b965825", "103r1" : "ami-c07db3ae", "104" : "ami-b1c70edf", "110" : "ami-3d4f8453" },
+      "ap-northeast-1" : { "103" : "ami-48a98126", "103r1" : "ami-57484139", "104" : "ami-1264727c", "110" : "ami-b17480d0" },
+      "sa-east-1" : { "103" : "ami-1569ed79", "103r1" : "ami-10901d7c", "104" : "ami-1d3cb071", "110" : "ami-792ea415" },
+      "ap-southeast-1" : { "103" : "ami-7bb47718", "103r1" : "ami-357fb756", "104" : "ami-9c38f2ff", "110" : "ami-826bb8e1" },
+      "ap-southeast-2" : { "103" : "ami-16e5bd75", "103r1" : "ami-a2a687c1", "104" : "ami-b11734d2", "110" : "ami-983e16fb" },
+      "eu-central-1" : { "103" : "ami-496b7725", "103r1" : "ami-b318fcdc", "104" : "ami-685abc07", "110" : "ami-93dc34fc" },
+      "us-east-1" : { "103" : "ami-2f0a4245", "103r1" : "ami-38323652", "104" : "ami-49151e23", "110" : "ami-7f0bc812" },
+      "us-west-1" : { "103" : "ami-8ec9a1ee", "103r1" : "ami-3d97e45d", "104" : "ami-f296eb92", "110" : "ami-52397d32" },
+      "us-west-2" : { "103" : "ami-ad0b17cc", "103r1" : "ami-97bf51f7", "104" : "ami-762cc616", "110" : "ami-913df9f1" }
     },
 
     "UbuntuAMI" : {
@@ -252,7 +245,7 @@
 
   "Conditions" : {
   },
-  
+
   "Resources": {
 
     "VPC": {
@@ -1024,7 +1017,7 @@
                       "vADC2",
                       "PrivateDnsName"
                   ] },
-                  "WebServer1":  "__WebServer__"              
+                  "WebServer1":  "__WebServer__"
                 }
               },
               "/root/puppet-apply.sh" : {
@@ -1253,7 +1246,7 @@
         "DesiredCapacity": "2",
         "VPCZoneIdentifier": [
           { "Ref": "PrivateSubnet1" },
-          { "Ref": "PrivateSubnet2" } 
+          { "Ref": "PrivateSubnet2" }
         ]
       }
     },
@@ -1438,5 +1431,5 @@
       }
     }
 
-  } 
+  }
 }

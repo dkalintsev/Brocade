@@ -16,7 +16,7 @@
 # - ec2:DescribeInstances
 # - ec2:CreateTags
 # - ec2:DeleteTags
-# 
+#
 export PATH=$PATH:/usr/local/bin
 logFile="/var/log/autoscluster.log"
 
@@ -97,7 +97,7 @@ safe_aws () {
             backoff=$RANDOM
             let "backoff %= 45"
             logMsg "003: safe_aws \"$*\" exceeded retry budget. Sleeping for $backoff second(s), then back to work.."
-            sleep $backoff            
+            sleep $backoff
             retries=0
             backoff=1
         fi
@@ -225,7 +225,7 @@ getLock () {
         if [[ ${#list[*]} == 1 ]]; then
             logMsg "015: We already have that tag, returning."
             return 0
-        fi        
+        fi
         # once there aren't any, tag ourselves
         logMsg "016: Tagging ourselves: \"$1:$2\""
         setTag $1 $2
@@ -408,5 +408,5 @@ while true; do
         else
             logMsg "042: Lost elections; returning to the main loop."
         fi
-    fi    
+    fi
 done
