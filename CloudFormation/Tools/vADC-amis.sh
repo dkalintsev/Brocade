@@ -5,7 +5,7 @@
 #
 # Pattern to match when querying AWS for vRouter AMIs
 #
-vADCAMI='*stingray-traffic-manager-*'
+vADCAMI='*stingray-traffic-manager-*,*brocade-virtual-traffic-manager*'
 #
 # Pattern to match the vADC AMI SKU Type; "STM-DEV" by default.
 # At the time of writing, I can see the following SKUs:
@@ -31,15 +31,8 @@ vADCAMI='*stingray-traffic-manager-*'
 SKU='STM-DEV'
 #
 # There may be many versions available; how many freshest ones to include?
-# 
-# I'm specifying a number that's larger than the number of available versions,
-# because simple trimming leaves in versions that are "no longer available",
-# in Marketplace, while leaving out those that actually are. Please see Q&A
-# section in the README file for the vADC template that uses output from this
-# script for more info:
-# https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/README.md
-# 
-Versions='15'
+#
+Versions='4'
 #
 OPTIND=1
 force=0
@@ -85,6 +78,7 @@ for i in $(seq 0 $pos); do
 		echo "Cached contents found for this region; re-run this script as \"$0 -f\" to force update."
 	else
 		aws --region $reg ec2 describe-images --owners aws-marketplace --filters Name=name,Values="$vADCAMI" | awk -F "\"" ' /"Name"/ { printf "%s:", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | grep "$SKU" | sed -e "s/ger-/ger:/g" -e "s/-x86/:x86/g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
+		echo "Got $(wc -l $fn | awk '{print $1}') AMIs"
 	fi
 done
 

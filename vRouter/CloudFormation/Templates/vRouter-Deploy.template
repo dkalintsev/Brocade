@@ -87,11 +87,11 @@
     "vRVers" : {
       "Description" : "Please select vRouter version:",
       "Type" : "String",
-      "Default" : "50R2B",
+      "Default" : "51R1B",
       "AllowedValues" : [
-        "41R3B",
         "42R1B",
-        "50R2B"
+        "50R2B",
+        "51R1B"
       ],
       "ConstraintDescription" : "Must be a valid vRouter version"
     },
@@ -185,31 +185,20 @@
   },
 
   "Mappings" : {
-    "AWSRegions" : {
-      "us-east-1"      : { "Name" : "US East (N. Virginia)" },
-      "us-west-1"      : { "Name" : "US West (N. California)" },
-      "us-west-2"      : { "Name" : "US West (Oregon)" },
-      "eu-west-1"      : { "Name" : "EU (Ireland)" },
-      "eu-central-1"   : { "Name" : "EU (Frankfurt)" },
-      "ap-south-1"     : { "Name" : "Asia Pacific (Mumbai)" },
-      "ap-northeast-1" : { "Name" : "Asia Pacific (Tokyo)" },
-      "ap-northeast-2" : { "Name" : "Asia Pacific (Seoul)" },
-      "ap-southeast-1" : { "Name" : "Asia Pacific (Singapore)" },
-      "ap-southeast-2" : { "Name" : "Asia Pacific (Sydney)" },
-      "sa-east-1"      : { "Name" : "South America (São Paulo)" }
-    },
 
     "vRAMI" : {
-      "eu-west-1" : { "41R3B" : "ami-e155d592", "42R1B" : "ami-6a59cf19", "50R2B" : "ami-68fd831b" },
-      "ap-southeast-1" : { "41R3B" : "ami-97d207f4", "42R1B" : "ami-88ad7ceb", "50R2B" : "ami-361ac055" },
-      "ap-southeast-2" : { "41R3B" : "ami-0b9fbc68", "42R1B" : "ami-c5ac83a6", "50R2B" : "ami-8fdaebec" },
-      "eu-central-1" : { "41R3B" : "ami-4114f52e", "42R1B" : "ami-3642ae59", "50R2B" : "ami-c73dcfa8" },
-      "ap-northeast-2" : { "41R3B" : "ami-7d1ad313", "42R1B" : "ami-93a06bfd", "50R2B" : "ami-8d38ede3" },
-      "ap-northeast-1" : { "41R3B" : "ami-a7f2e2c9", "42R1B" : "ami-772ccf16", "50R2B" : "ami-b0da0cd1" },
-      "us-east-1" : { "41R3B" : "ami-d79a8dbd", "42R1B" : "ami-e8bb4c85", "50R2B" : "ami-90473487" },
-      "sa-east-1" : { "41R3B" : "ami-5c63ec30", "42R1B" : "ami-143eb678", "50R2B" : "ami-28178744" },
-      "us-west-1" : { "41R3B" : "ami-cd601cad", "42R1B" : "ami-342a5154", "50R2B" : "ami-6c105f0c" },
-      "us-west-2" : { "41R3B" : "ami-7fb5411f", "42R1B" : "ami-32867852", "50R2B" : "ami-36994b56" }
+      "ap-south-1" : { "51R1B" : "ami-5ab0c435" },
+      "eu-west-1" : { "42R1B" : "ami-6a59cf19", "50R2B" : "ami-68fd831b", "51R1B" : "ami-37450e44" },
+      "ap-northeast-2" : { "42R1B" : "ami-93a06bfd", "50R2B" : "ami-8d38ede3", "51R1B" : "ami-1132e67f" },
+      "ap-northeast-1" : { "42R1B" : "ami-772ccf16", "50R2B" : "ami-b0da0cd1", "51R1B" : "ami-d072d1b1" },
+      "sa-east-1" : { "42R1B" : "ami-143eb678", "50R2B" : "ami-28178744", "51R1B" : "ami-78861a14" },
+      "ap-southeast-1" : { "42R1B" : "ami-88ad7ceb", "50R2B" : "ami-361ac055", "51R1B" : "ami-067adb65" },
+      "ap-southeast-2" : { "42R1B" : "ami-c5ac83a6", "50R2B" : "ami-8fdaebec", "51R1B" : "ami-9f84b9fc" },
+      "eu-central-1" : { "42R1B" : "ami-3642ae59", "50R2B" : "ami-c73dcfa8", "51R1B" : "ami-cc04fca3" },
+      "us-east-1" : { "42R1B" : "ami-e8bb4c85", "50R2B" : "ami-90473487", "51R1B" : "ami-92bae385" },
+      "us-east-2" : { "51R1B" : "ami-f3267c96" },
+      "us-west-1" : { "42R1B" : "ami-342a5154", "50R2B" : "ami-6c105f0c", "51R1B" : "ami-85da91e5" },
+      "us-west-2" : { "42R1B" : "ami-32867852", "50R2B" : "ami-36994b56", "51R1B" : "ami-571cbb37" }
     }
 
   },

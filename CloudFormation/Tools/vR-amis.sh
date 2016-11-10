@@ -55,6 +55,7 @@ for i in $(seq 0 $pos); do
 		echo "Cached contents found for this region; re-run this script as \"$0 -f\" to force update."
 	else
 		aws --region $reg ec2 describe-images --owners aws-marketplace --filters Name=name,Values="$vRAMI" | awk -F "\"" ' /"Name"/ { printf "%s_", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | sed -e "s/ami_/ami:/g" -e "s/_amd/:amd/g" -e "s/_ami/:ami/g" -e "s/\.//g" -e "s/_//g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
+		echo "Got $(wc -l $fn | awk '{print $1}') AMIs"
 	fi
 done
 

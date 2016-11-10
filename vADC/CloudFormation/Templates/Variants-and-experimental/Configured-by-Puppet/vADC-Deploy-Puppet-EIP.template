@@ -83,12 +83,12 @@
     "vADCVers" : {
       "Description" : "Please select vADC version:",
       "Type" : "String",
-      "Default" : "110",
+      "Default" : "111",
       "AllowedValues" : [
-        "103",
         "103r1",
         "104",
-        "110"
+        "110",
+        "111"
       ],
       "ConstraintDescription" : "Must be a valid vADC version"
     },
@@ -199,32 +199,20 @@
   },
 
   "Mappings" : {
-    "AWSRegions" : {
-      "us-east-1"      : { "Name" : "US East (N. Virginia)" },
-      "us-west-1"      : { "Name" : "US West (N. California)" },
-      "us-west-2"      : { "Name" : "US West (Oregon)" },
-      "eu-west-1"      : { "Name" : "EU (Ireland)" },
-      "eu-central-1"   : { "Name" : "EU (Frankfurt)" },
-      "ap-south-1"     : { "Name" : "Asia Pacific (Mumbai)" },
-      "ap-northeast-1" : { "Name" : "Asia Pacific (Tokyo)" },
-      "ap-northeast-2" : { "Name" : "Asia Pacific (Seoul)" },
-      "ap-southeast-1" : { "Name" : "Asia Pacific (Singapore)" },
-      "ap-southeast-2" : { "Name" : "Asia Pacific (Sydney)" },
-      "sa-east-1"      : { "Name" : "South America (São Paulo)" }
-    },
 
     "vADCAMI" : {
-      "ap-south-1" : { "104" : "ami-1b1a7074", "110" : "ami-f9bcd696" },
-      "eu-west-1" : { "103" : "ami-796bcb0a", "103r1" : "ami-33fa4140", "104" : "ami-b46ee8c7", "110" : "ami-4f0f963c" },
-      "ap-northeast-2" : { "103" : "ami-4b965825", "103r1" : "ami-c07db3ae", "104" : "ami-b1c70edf", "110" : "ami-3d4f8453" },
-      "ap-northeast-1" : { "103" : "ami-48a98126", "103r1" : "ami-57484139", "104" : "ami-1264727c", "110" : "ami-b17480d0" },
-      "sa-east-1" : { "103" : "ami-1569ed79", "103r1" : "ami-10901d7c", "104" : "ami-1d3cb071", "110" : "ami-792ea415" },
-      "ap-southeast-1" : { "103" : "ami-7bb47718", "103r1" : "ami-357fb756", "104" : "ami-9c38f2ff", "110" : "ami-826bb8e1" },
-      "ap-southeast-2" : { "103" : "ami-16e5bd75", "103r1" : "ami-a2a687c1", "104" : "ami-b11734d2", "110" : "ami-983e16fb" },
-      "eu-central-1" : { "103" : "ami-496b7725", "103r1" : "ami-b318fcdc", "104" : "ami-685abc07", "110" : "ami-93dc34fc" },
-      "us-east-1" : { "103" : "ami-2f0a4245", "103r1" : "ami-38323652", "104" : "ami-49151e23", "110" : "ami-7f0bc812" },
-      "us-west-1" : { "103" : "ami-8ec9a1ee", "103r1" : "ami-3d97e45d", "104" : "ami-f296eb92", "110" : "ami-52397d32" },
-      "us-west-2" : { "103" : "ami-ad0b17cc", "103r1" : "ami-97bf51f7", "104" : "ami-762cc616", "110" : "ami-913df9f1" }
+      "ap-south-1" : { "104" : "ami-1b1a7074", "110" : "ami-f9bcd696", "111" : "ami-856115ea" },
+      "eu-west-1" : { "103r1" : "ami-33fa4140", "104" : "ami-b46ee8c7", "110" : "ami-4f0f963c", "111" : "ami-3bd89748" },
+      "ap-northeast-2" : { "103r1" : "ami-c07db3ae", "104" : "ami-b1c70edf", "110" : "ami-3d4f8453", "111" : "ami-5ffb2f31" },
+      "ap-northeast-1" : { "103r1" : "ami-57484139", "104" : "ami-1264727c", "110" : "ami-b17480d0", "111" : "ami-381dba59" },
+      "sa-east-1" : { "103r1" : "ami-10901d7c", "104" : "ami-1d3cb071", "110" : "ami-792ea415", "111" : "ami-a362ffcf" },
+      "ap-southeast-1" : { "103r1" : "ami-357fb756", "104" : "ami-9c38f2ff", "110" : "ami-826bb8e1", "111" : "ami-ab4fe9c8" },
+      "ap-southeast-2" : { "103r1" : "ami-a2a687c1", "104" : "ami-b11734d2", "110" : "ami-983e16fb", "111" : "ami-5a5e6339" },
+      "eu-central-1" : { "103r1" : "ami-b318fcdc", "104" : "ami-685abc07", "110" : "ami-93dc34fc", "111" : "ami-9e30c9f1" },
+      "us-east-1" : { "103r1" : "ami-38323652", "104" : "ami-49151e23", "110" : "ami-7f0bc812", "111" : "ami-a87626bf" },
+      "us-east-2" : { "111" : "ami-e03a6085" },
+      "us-west-1" : { "103r1" : "ami-3d97e45d", "104" : "ami-f296eb92", "110" : "ami-52397d32", "111" : "ami-dbfdb5bb" },
+      "us-west-2" : { "103r1" : "ami-97bf51f7", "104" : "ami-762cc616", "110" : "ami-913df9f1", "111" : "ami-d12c89b1" }
     },
 
     "UbuntuAMI" : {
@@ -1274,11 +1262,10 @@
       },
 
       "Properties": {
-        "InstanceType": "t2.nano",
+        "AssociatePublicIpAddress": "false",
         "KeyName": {
           "Ref": "KeyName"
         },
-        "AssociatePublicIpAddress": "false",
         "ImageId": {
           "Fn::FindInMap": [
             "UbuntuAMI",
@@ -1286,6 +1273,7 @@
             "AMI"
           ]
         },
+        "InstanceType": "t2.nano",
         "SecurityGroups": [
           {
             "Ref": "WebServerSecurityGroup"
