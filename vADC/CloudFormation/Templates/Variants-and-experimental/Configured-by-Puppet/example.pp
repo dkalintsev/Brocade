@@ -8,7 +8,7 @@ class { 'brocadevtm':
 
 class { 'brocadevtm::global_settings':
   cluster_comms__allowed_update_hosts         => '["all"]',
-  fault_tolerance__auto_failback              => false,
+  fault_tolerance__auto_failback              => true,
   fault_tolerance__frontend_check_ips         => '[]',
   fault_tolerance__monitor_interval           => 2000,
   fault_tolerance__monitor_timeout            => 15,
