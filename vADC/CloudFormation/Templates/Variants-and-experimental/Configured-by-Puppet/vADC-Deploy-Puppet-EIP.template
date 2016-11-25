@@ -83,7 +83,7 @@
     "vADCVers" : {
       "Description" : "Please select vADC version:",
       "Type" : "String",
-      "Default" : "111",
+      "Default" : "110",
       "AllowedValues" : [
         "103r1",
         "104",
