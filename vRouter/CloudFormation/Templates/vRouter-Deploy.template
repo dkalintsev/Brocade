@@ -87,11 +87,12 @@
     "vRVers" : {
       "Description" : "Please select vRouter version:",
       "Type" : "String",
-      "Default" : "51R1B",
+      "Default" : "52R2B",
       "AllowedValues" : [
         "42R1B",
         "50R2B",
-        "51R1B"
+        "51R1B",
+        "52R2B"
       ],
       "ConstraintDescription" : "Must be a valid vRouter version"
     },
