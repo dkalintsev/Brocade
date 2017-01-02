@@ -2,7 +2,7 @@
 
 A couple shell scripts to fetch a list of AMIs from AWS and build "Versions" parameter and "AMI" map for Brocade vRouter and vADC CloudFormation templates.
 
-Scripts seem to work fine now, at least when run from an Amazon Linux EC2 instance with appropriate IAM permissions.
+Scripts seem to work fine now, at least when run from an Amazon Linux EC2 instance with appropriate IAM permissions, or when run from MacOS Terminal with AWS CLI set up.
 
 Caveats:
 
