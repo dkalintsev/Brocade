@@ -194,8 +194,9 @@
   },
 
   "Conditions" : {
+    "US-East-1": { "Fn::Equals" : [{ "Ref" : "AWS::Region" }, "us-east-1"] }
   },
-  
+
   "Resources": {
 
     "VPC": {
@@ -216,6 +217,28 @@
           }
 
         ]
+      }
+    },
+
+    "DHCPOptions" : {
+      "Type": "AWS::EC2::DHCPOptions",
+      "Properties": {
+        "DomainName": {
+          "Fn::If": [
+            "US-East-1",
+            "ec2.internal",
+            { "Fn::Join": [ ".", [ { "Ref" : "AWS::Region" }, "compute.internal" ] ] }
+          ]
+        },
+        "DomainNameServers": [ "AmazonProvidedDNS" ]
+      }
+    },
+
+    "VPCDHCPOptionsAssociation" : {
+      "Type" : "AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "DhcpOptionsId" : {"Ref" : "DHCPOptions"}
       }
     },
 
