@@ -67,7 +67,7 @@ For a demo / test purposes, you can use this template directly. Make note of the
 
 - Template doesn't add a license key or link your cluster to a Services Director.
 
-- I've only really tested with vADC version 11.0. Please let me know if you hit problems.
+- Tested with vADC version 11.0 and 11.1. Please let me know if you hit problems.
 
 ## How to use
 
@@ -90,9 +90,6 @@ https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?
 6. On the next screen, first click "Manual Launch" tab away from pre-selected "1-Click Launch", then click yellow "Accept Software Terms" button in the "Price for your selections" box.
 
 ## Q&A
-
-**Q**: I tried to use this template with the vADC version 11.1 and it doesn't work!  
-**A**: I'm investigating. `puppet apply` seems to be causing a bit of an issue. In meanwhile, please use version 11.0.
 
 **Q**: My deployment sits forever at *"CREATE\_IN\_PROGRESS"* of vADC instances, then fails and rolls back. In the "Status reason" of CloudFormation "Events" log I see a message similar to *"In order to use this AWS Marketplace product you need to accept terms and subscribe. To do so please visit http://aws.amazon.com/marketplace/pp?sku=30zvsq8o1jmbp6jvzis0wfgdt"* against the vADC1 AWS::EC2::Instance.  
 **A**: You haven't subscribed to Brocade vADC software through the AWS Marketplace yet. Please visit the link CloudFormation has shown (which may be different from the one above), which will take you to the step #4 in the subscription instructions above the Q&A. Once subscribed, select "Delete Stack", and try deploying again. Please note that there are many SKUs available; so make sure you subscribe to the one that your template is trying to deploy. The easiest way to get to the right one is to visit the URL that CloudFormation tells you in the error message. :)

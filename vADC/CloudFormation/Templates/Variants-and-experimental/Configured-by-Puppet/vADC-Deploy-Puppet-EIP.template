@@ -83,7 +83,7 @@
     "vADCVers" : {
       "Description" : "Please select vADC version:",
       "Type" : "String",
-      "Default" : "110",
+      "Default" : "111",
       "AllowedValues" : [
         "103r1",
         "104",
@@ -213,6 +213,16 @@
       "us-east-2" : { "111" : "ami-e03a6085" },
       "us-west-1" : { "103r1" : "ami-3d97e45d", "104" : "ami-f296eb92", "110" : "ami-52397d32", "111" : "ami-dbfdb5bb" },
       "us-west-2" : { "103r1" : "ami-97bf51f7", "104" : "ami-762cc616", "110" : "ami-913df9f1", "111" : "ami-d12c89b1" }
+    },
+
+    "vADCPuppetModuleVersion" : {
+      "PMVers": {
+        "103r1": " '>=1.37.0 < 1.38.0' ",
+        "104": " '>=1.38.0 < 1.39.0' ",
+        "110": " '>=1.39.0 < 1.310.0' ",
+        "111": " '>=1.310.0 < 1.311.0' ",
+        "171": " '>=1.311.0 < 1.312.0' "
+      }
     },
 
     "UbuntuAMI" : {
@@ -1072,7 +1082,13 @@
           "#!/bin/bash -xe\n",
           "apt-get update -y\n",
           "apt-get install puppet -y\n",
-          "puppet module install tuxinvader-brocadevtm\n",
+          "puppet module install tuxinvader-brocadevtm --version ",
+          { "Fn::FindInMap": [
+            "vADCPuppetModuleVersion",
+            "PMVers",
+            { "Ref": "vADCVers" }
+          ] },
+          "\n",
           "apt-get install python-pip -y\n",
           "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
           "apt-get install awscli -y\n",

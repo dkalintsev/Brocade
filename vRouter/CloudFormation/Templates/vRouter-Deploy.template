@@ -60,7 +60,7 @@
     "AZs": {
       "Description": "List of Availability Zones where Private and Public subnet pairs will be created. Please select two or three.",
       "Type": "List<AWS::EC2::AvailabilityZone::Name>",
-      "ConstraintDescription": "Please select at least one AZ from the drop-down list."            
+      "ConstraintDescription": "Please select at least one AZ from the drop-down list."
     },
 
     "NumberOfAZs": {
