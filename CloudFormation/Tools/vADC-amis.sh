@@ -36,22 +36,26 @@ Versions='4'
 #
 OPTIND=1
 force=0
+prof=""
 
 function show_help {
 	printf "This script queries AWS for AMI IDs of Brocade Traffic Manager in all regions, and prints the respective\n"
 	printf "\"Parameters\" and \"Mappings\" sections for CloudFormation template.\n\n"
 	printf "When run, script checks for existence of per-region cached result files and re-uses contents, unless\n"
 	printf "the script was executed with the \"-f\" parameter, in which case AWS is re-queried (takes long time).\n\n"
-	printf "Usage: $0 [-f]\n\n"
+	printf "You can specify which AWS CLI profile to use with the \"-p <profile>\" parameter.\n\n"
+	printf "Usage: $0 [-f] [-p <profile>]\n\n"
 }
 
-while getopts "h?f" opt; do
+while getopts "h?fp:" opt; do
     case "$opt" in
     h|\?)
         show_help
         exit 0
         ;;
     f)  force=1
+        ;;
+    p)  prof="--profile ${OPTARG}"
         ;;
     esac
 done
@@ -63,7 +67,7 @@ shift $((OPTIND-1))
 declare -a regions
 declare -a versions
 
-regions=( $(aws --region ap-southeast-2 ec2 describe-regions | awk -F "\"" ' /RegionName/ { print $4 }') )
+regions=( $(aws $prof --region ap-southeast-2 ec2 describe-regions | awk -F "\"" ' /RegionName/ { print $4 }') )
 
 pos=$(( ${#regions[*]} - 1 ))
 for i in $(seq 0 $pos); do
@@ -77,7 +81,7 @@ for i in $(seq 0 $pos); do
 	if [[ -a "$fn" ]]; then
 		echo "Cached contents found for this region; re-run this script as \"$0 -f\" to force update."
 	else
-		aws --region $reg ec2 describe-images --owners aws-marketplace --filters Name=name,Values="$vADCAMI" | awk -F "\"" ' /"Name"/ { printf "%s:", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | grep "$SKU" | sed -e "s/ger-/ger:/g" -e "s/-x86/:x86/g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
+		aws $prof --region $reg ec2 describe-images --owners aws-marketplace --filters Name=name,Values="$vADCAMI" | awk -F "\"" ' /"Name"/ { printf "%s:", $4 }; /"ImageId"/ { printf "%s\n", $4 }' | grep "$SKU" | sed -e "s/ger-/ger:/g" -e "s/-x86/:x86/g" | awk -F ":" '{ printf "%s:%s\n", $2, $4 }' > "$fn"
 		echo "Got $(wc -l $fn | awk '{print $1}') AMIs"
 	fi
 done
