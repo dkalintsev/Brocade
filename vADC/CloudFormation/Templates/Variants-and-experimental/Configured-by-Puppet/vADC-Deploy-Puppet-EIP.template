@@ -228,17 +228,20 @@
     },
 
     "UbuntuAMI" : {
-      "ap-south-1" : { "AMI" : "ami-47c4b128" },
-      "eu-west-1" : { "AMI" : "ami-284c375b" },
-      "ap-southeast-1" : { "AMI" : "ami-eea7028d" },
-      "ap-southeast-2" : { "AMI" : "ami-0e3a0a6d" },
-      "eu-central-1" : { "AMI" : "ami-72c33e1d" },
-      "ap-northeast-2" : { "AMI" : "ami-cf71a4a1" },
-      "ap-northeast-1" : { "AMI" : "ami-04ba6965" },
-      "us-east-1" : { "AMI" : "ami-8fe79998" },
-      "sa-east-1" : { "AMI" : "ami-a88211c4" },
-      "us-west-1" : { "AMI" : "ami-96d897f6" },
-      "us-west-2" : { "AMI" : "ami-a24598c2" }
+      "ap-south-1" : { "AMI" : "ami-19f78076" },
+      "eu-west-2" : { "AMI" : "ami-45eae021" },
+      "eu-west-1" : { "AMI" : "ami-17fda671" },
+      "ap-northeast-2" : { "AMI" : "ami-7669be18" },
+      "ap-northeast-1" : { "AMI" : "ami-16b0f671" },
+      "sa-east-1" : { "AMI" : "ami-10abcf7c" },
+      "ca-central-1" : { "AMI" : "ami-70299b14" },
+      "ap-southeast-1" : { "AMI" : "ami-bda410de" },
+      "ap-southeast-2" : { "AMI" : "ami-c83335ab" },
+      "eu-central-1" : { "AMI" : "ami-d93cf5b6" },
+      "us-east-1" : { "AMI" : "ami-af22d9b9" },
+      "us-east-2" : { "AMI" : "ami-41d48e24" },
+      "us-west-1" : { "AMI" : "ami-5ca3fe3c" },
+      "us-west-2" : { "AMI" : "ami-4c0bb02c" }
     }
 
   },
