@@ -776,7 +776,7 @@
               },
 
               "99-wait_1_min_then_signal_that_we_are_done" : {
-                "command" : { "Fn::Join" : ["", [
+                "command" : { "Fn::Join" : [ "", [
                   "sleep 60 && /usr/local/bin/cfn-signal -e 0 ",
                   "-d https://$(curl http://169.254.169.254/latest/meta-data/public-ipv4):9090 ",
                   "'",
@@ -812,7 +812,7 @@
             "Ref": "vADCSecurityGroup"
           }
         ],
-        "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : [ "", [
           "password=",
             { "Ref" : "AdminPass" },
           " accept_license=y",
@@ -978,10 +978,10 @@
                   "AdminPass": { "Ref": "AdminPass" },
                   "SSLPrivateKey": { "Fn::Join" : [ "\\n", { "Ref": "SSLPrivateKey"} ] },
                   "SSLPublicKey": { "Fn::Join" : [ "\\n", { "Ref": "SSLPublicKey"} ] },
-                  "TrafficIPs": { "Fn::Join" : [ "",
+                  "TrafficIPs": { "Fn::Join" : [ "", [
                     "\"", { "Ref": "TrafficIP1" }, "\",",
                     "\"", { "Ref": "TrafficIP2" }, "\""
-                  ]}
+                  ]]}
                 }
               },
               "/root/puppet-apply.sh" : {
