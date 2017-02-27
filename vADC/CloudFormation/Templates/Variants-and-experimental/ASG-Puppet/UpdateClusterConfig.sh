@@ -303,8 +303,7 @@ if [[ -s "$changeSetF" ]]; then
     cat "$changeSetF" > "$manifest"
     rm -f "$changeSetF"
 else
-    echo "Edit resulted in an empty file for some reason."
-    echo "Not creating $manifest."
+    logMsg "014: Edit resulted in an empty file for some reason. Not creating $manifest."
     rm -f "$changeSetF"
     exit 1
 fi
@@ -312,10 +311,10 @@ fi
 newsha=$(shasum "$manifest" | awk '{print $1}')
 
 if [[ "$newsha" != "$oldsha" ]]; then
-    echo "File changed; need to update"
+    logMsg "015: File changed; need to update"
     # Yeah, I know - error code "10" is arbitrary. Let me know if you have a better idea.
     exit 10
 else
-    echo "No changes needed"
+    logMsg "016: No changes needed."
     exit 0
 fi

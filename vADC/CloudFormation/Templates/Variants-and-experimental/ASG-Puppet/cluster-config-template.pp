@@ -26,7 +26,7 @@ brocadevtm::ssl_server_keys { 'Example-Cert':
 
 brocadevtm::traffic_ip_groups { 'Web%20VIP':
   ensure                                  => present,
-  basic__ipaddresses                      => '[{{TrafficIPs}}]',
+  basic__ipaddresses                      => '[{{& TrafficIPs}}]',
   basic__machines                         => '[__vADCnDNS__]',
   basic__mode                             => 'ec2vpcelastic',
 }
