@@ -16,7 +16,7 @@
 # adding or removing logMsg calls in this script, run the following command to re-apply
 # the sequence:
 #
-# perl -i -000pe 's/(logMsg ")(...)/$1 . sprintf("%03d", ++$n)/ge' UpdateClusterConfig.sh
+# perl -i -000pe 's/(logMsg "001..)/$1 . sprintf("%03d", ++$n)/ge' UpdateClusterConfig.sh
 #
 # If you have a better idea for debugging / traceability - open an issue or even better
 # a pull request ;)
@@ -55,13 +55,11 @@ manifest="$work_dir/cluster-config.pp"
 vADC1PrivateIP=""
 vADCnDNS=""
 
-
 # Tag for Cluster state
 stateTag="ClusterState"
 
 # Values for Cluster
 statusActive="Active"
-
 
 cleanup  () {
     rm -f $runningInstF $clusteredInstF $deltaInstF $filesF
@@ -85,21 +83,21 @@ if [[ "$verbose" == "" ]]; then
 fi
 
 if [[ -f $lockF ]]; then
-    logMsg "001: Found lock file, exiting."
+    logMsg "002: Found lock file, exiting."
     exit 1
 fi
 
 # We need jq, which should have been installed by now.
 which jq >/dev/null 2>&1
 if [[ "$?" != "0" ]]; then
-    logMsg "002: Looks like jq isn't installed; quiting."
+    logMsg "003: Looks like jq isn't installed; quiting."
     exit 1
 fi
 
 # We also need aws cli tools.
 which aws >/dev/null 2>&1
 if [[ "$?" != "0" ]]; then
-    logMsg "003: Looks like AWS CLI tools isn't installed; quiting."
+    logMsg "004: Looks like AWS CLI tools isn't installed; quiting."
     exit 1
 fi
 
@@ -119,7 +117,7 @@ safe_aws () {
             # Doing random sleep up to 45 sec, then back to try again.
             backoff=$RANDOM
             let "backoff %= 45"
-            logMsg "004: safe_aws \"$*\" exceeded retry budget. Sleeping for $backoff second(s), then back to work.."
+            logMsg "005: safe_aws \"$*\" exceeded retry budget. Sleeping for $backoff second(s), then back to work.."
             sleep $backoff
             retries=0
             backoff=1
@@ -127,7 +125,7 @@ safe_aws () {
         aws $* > $resFName 2>>$awscliLogF
         errCode=$?
         if [[ "$errCode" != "0" ]]; then
-            logMsg "005: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
+            logMsg "006: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
             sleep $backoff
             let "retries += 1"
         fi
@@ -214,17 +212,17 @@ declare -a list
 findTaggedInstances $stateTag $statusActive ADCs
 list=( $(cat $jqResFName | sort -rn) )
 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-logMsg "036: Checking for $statusActive vTMs; got: \"$s_list\""
+logMsg "007: Checking for $statusActive vTMs; got: \"$s_list\""
 
 # Next, let's get the private IP of the first one; that will be our vADC1PrivateIP
 if [[ ${#list[*]} > 0 ]]; then
     instance=${list[0]}
     getInstanceIP $instance
     vADC1PrivateIP=$(cat $jqResFName)
-    logMsg "027: Picked value for __vADC1PrivateIP__: \"$vADC1PrivateIP\""
+    logMsg "008: Picked value for __vADC1PrivateIP__: \"$vADC1PrivateIP\""
 else
     # Didn't find any active vADCs
-    logMsg "000: Didn't find any active vADCs; exiting for now."
+    logMsg "009: Didn't find any active vADCs; exiting for now."
     exit 0
 fi
 
@@ -237,7 +235,7 @@ fi
 for instance in ${list[@]}; do
     getInstanceDnsName $instance
     dnsname=$(cat $jqResFName)
-    logMsg "000: Private DNS name for Instance $instance is $dnsname"
+    logMsg "010: Private DNS name for Instance $instance is $dnsname"
     if [[ "${list[@]: -1}" != "$dnsname" ]]; then
         vADCnDNS=$vADCnDNS"\"$dnsname\","
     else
@@ -251,7 +249,7 @@ done
 findTaggedInstances "Name" $pool_tag
 list=( $(cat $jqResFName | sort -rn) )
 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-logMsg "000: Looking for running instances tagged with $pool_tag; got: \"$s_list\""
+logMsg "011: Looking for running instances tagged with $pool_tag; got: \"$s_list\""
 
 # Now, let's walk through the resulting list and create a Puppet manifest definition for the pool
 #
@@ -261,13 +259,13 @@ nodes=""
 
 if [[ ${#list[*]} == 0 ]]; then
     # Didn't find any running backend pool members; let's set our pool to 127.0.0.1
-    logMsg "000: Didn't find any running backend pool instances; will set the pool to 127.0.0.1:80"
+    logMsg "012: Didn't find any running backend pool instances; will set the pool to 127.0.0.1:80"
     nodes="$left_in""127.0.0.1""$right_in"
 else
     for instance in ${list[@]}; do
         getInstanceIP $instance
         IP=$(cat $jqResFName)
-        logMsg "000: Private IP of Instance $instance is $IP"
+        logMsg "013: Private IP of Instance $instance is $IP"
         a="$left_in""$IP""$right_in"
         if [[ "${list[@]: -1}" != "$IP" ]]; then
             nodes="$nodes""$a"","
