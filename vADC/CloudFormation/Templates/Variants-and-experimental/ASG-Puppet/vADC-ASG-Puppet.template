@@ -1047,7 +1047,7 @@
           "sleep 60\n",
           "cd /root\n",
           "rm -f crtab.txt\n",
-          "echo \"#*/5 * * * * /root/puppet-apply.sh > /var/log/puppet-apply-out.log 2>&1\" > crtab.txt\n",
+          "echo \"*/5 * * * * /root/puppet-apply.sh > /var/log/puppet-apply-out.log 2>&1\" > crtab.txt\n",
           "crontab crtab.txt\n",
           "rm -f crtab.txt\n"
         ]]}}
