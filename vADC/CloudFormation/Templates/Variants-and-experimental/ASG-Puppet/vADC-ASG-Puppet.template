@@ -1,0 +1,1348 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description": "This AWS CloudFormation Template deploys a cluster of Brocade vADCs into a new VPC through an ASG in front of two Linux instances running web server. vADC configuration template is downloaded from GitHub page, customised with runtime parameter values, and applied to the vADC cluster. Configuration tasks are performed on an Ubuntu Linux instance maintained by an ASG.",
+  "Metadata" : {
+    "AWS::CloudFormation::Interface" : {
+      "ParameterGroups" : [
+        {
+          "Label" : { "default" : "VPC Configuration" },
+          "Parameters" : [ "AZs", "VPCCIDR", "PublicSubnetCIDR1", "PrivateSubnetCIDR1", "PublicSubnetCIDR2", "PrivateSubnetCIDR2" ]
+        },
+
+        {
+          "Label" : { "default" : "vADC Configuration" },
+          "Parameters" : [ "vADCVers", "InstanceType", "KeyName", "AdminPass" ]
+        },
+        {
+          "Label" : { "default" : "Security Configuration" },
+          "Parameters" : [ "RemoteAccessCIDR" ]
+        },
+        {
+          "Label" : { "default" : "Sample App Configuration" },
+          "Parameters" : [ "DomainName", "AppConfigURL", "SSLPublicKey", "SSLPrivateKey" ]
+        }
+      ],
+      "ParameterLabels" : {
+        "VPCCIDR" : { "default" : "New VPC CIDR Block:" },
+        "PublicSubnetCIDR1" : { "default" : "Public Subnet 1:" },
+        "PublicSubnetCIDR2" : { "default" : "Public Subnet 2:" },
+        "PrivateSubnetCIDR1" : { "default" : "Private Subnet 1:" },
+        "PrivateSubnetCIDR2" : { "default" : "Private Subnet 2:" },
+        "InstanceType" : { "default" : "vADC instance type:" },
+        "vADCVers" : { "default" : "vADC Version:" },
+        "KeyName" : { "default" : "SSH Key Name:" },
+        "AdminPass" : { "default" : "vADC admin user password:" },
+        "AZs" : { "default" : "Select two Availability Zones:" },
+        "RemoteAccessCIDR" : { "default" : "Remote Access CIDR:" },
+        "DomainName" : { "default" : "Sample Web App Domain name:" },
+        "AppConfigURL" : { "default" : "vADC Config Puppet Manifest URL:" },
+        "SSLPublicKey" : { "default" : "SSL Public Key:" },
+        "SSLPrivateKey" : { "default" : "SSL Private Key:" }
+      }
+    }
+  },
+
+  "Parameters": {
+    "InstanceType": {
+      "Description": "Please select a vADC EC2 instance type",
+      "Type": "String",
+      "Default": "m4.large",
+      "AllowedValues": [
+        "t2.small",
+        "t2.medium",
+        "t2.large",
+        "m4.large",
+        "m4.xlarge",
+        "m4.2xlarge",
+        "m4.4xlarge",
+        "m4.10xlarge",
+        "m3.medium",
+        "m3.large",
+        "m3.xlarge",
+        "m3.2xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "c4.2xlarge",
+        "c4.4xlarge",
+        "c4.8xlarge",
+        "c3.large",
+        "c3.xlarge",
+        "c3.2xlarge",
+        "c3.4xlarge",
+        "c3.8xlarge",
+        "r3.large",
+        "r3.xlarge",
+        "r3.2xlarge",
+        "r3.4xlarge",
+        "r3.8xlarge"
+      ],
+      "ConstraintDescription": "Must be an allowed EC2 instance type."
+    },
+
+    "vADCVers" : {
+      "Description" : "Please select vADC version:",
+      "Type" : "String",
+      "Default" : "171",
+      "AllowedValues" : [
+        "104r1",
+        "110",
+        "111",
+        "171"
+      ],
+      "ConstraintDescription" : "Must be a valid vADC version"
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Default": "",
+      "AllowedPattern" : "[-_ a-zA-Z0-9]*",
+      "Description": "Name of an existing EC2 KeyPair. Your vADC will launch with this KeyPair.",
+      "ConstraintDescription": "Must be the name of an existing EC2 KeyPair."
+    },
+
+    "AdminPass": {
+      "Description" : "Password for the vADC admin user. Must be 6 to 32 characters containing letters, numbers and symbols",
+      "Type"        : "String",
+      "MinLength"   : "6",
+      "MaxLength"   : "32",
+      "AllowedPattern" : "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+      "NoEcho"         : "true",
+      "Default"        : "Password123"
+    },
+
+    "RemoteAccessCIDR": {
+      "Description": "Allowed source IP address range for SSH access into vADC",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
+
+    "VPCCIDR": {
+      "Description": "This is the IP block for your new VPC. Typically it is a /16 from the private IP range.",
+      "Type": "String",
+      "Default": "10.8.0.0/16",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
+
+    "AZs": {
+      "Description": "List of Availability Zones where Private and Public subnet pairs will be created. Please select two.",
+      "Type": "List<AWS::EC2::AvailabilityZone::Name>",
+      "ConstraintDescription": "Please select an AZ from a drop-down list."
+    },
+
+    "PublicSubnetCIDR1": {
+      "Description": "vADC 1 will have one interface in this public subnet.",
+      "Type": "String",
+      "Default": "10.8.1.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
+
+    "PublicSubnetCIDR2": {
+      "Description": "vADC 2 will have one interface in this public subnet.",
+      "Type": "String",
+      "Default": "10.8.2.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
+
+    "PrivateSubnetCIDR1": {
+      "Description": "This is a private subnet available for your instances in AZ1.",
+      "Type": "String",
+      "Default": "10.8.3.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
+
+    "PrivateSubnetCIDR2": {
+      "Description": "This is a private subnet available for your instances in AZ2.",
+      "Type": "String",
+      "Default": "10.8.4.0/24",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "Must be a valid CIDR range of the form x.x.x.x/x."
+    },
+
+    "DomainName": {
+      "Type": "String",
+      "Default": "corp.local",
+      "AllowedPattern" : "[\\-a-zA-Z0-9\\.]*",
+      "Description": "Domain name for the example app. This template will create apex and www records in Route53.",
+      "ConstraintDescription": "Please use letters, numbers, and dashes only."
+    },
+
+    "AppConfigURL": {
+      "Type": "String",
+      "Default": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet/cluster-config-template.pp",
+      "AllowedPattern" : "https?://[-a-zA-Z0-9\\.%/_]*",
+      "Description": "URL of the Puppet manifest for vADC configuration.",
+      "ConstraintDescription": "Please use letters, numbers, and dashes only. Apologies - this regex is rather simple."
+    },
+
+    "SSLPublicKey": {
+      "Type": "CommaDelimitedList",
+      "Default": "-----BEGIN CERTIFICATE-----,MIIDVjCCAj4CCQCFxCco1wRsijANBgkqhkiG9w0BAQUFADBtMQswCQYDVQQGEwJV,UzERMA8GA1UECBMITmV3IFlvcmsxETAPBgNVBAcTCEJyb29rbHluMSEwHwYDVQQK,ExhFeGFtcGxlIEJyb29rbHluIENvbXBhbnkxFTATBgNVBAMUDCouY29ycC5sb2Nh,bDAeFw0xNjA5MjcwMTQ5MTlaFw0xNzA5MjcwMTQ5MTlaMG0xCzAJBgNVBAYTAlVT,MREwDwYDVQQIEwhOZXcgWW9yazERMA8GA1UEBxMIQnJvb2tseW4xITAfBgNVBAoT,GEV4YW1wbGUgQnJvb2tseW4gQ29tcGFueTEVMBMGA1UEAxQMKi5jb3JwLmxvY2Fs,MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsV4APYXFTIvUrFl46OJ2,6dnv2x6yXbV+WH1f2S0i6/1a1b/7hLhPa8S9xxPwWh/ykpZvrNV3tAZ04fA6R68Y,Bq29Vd5APZNrOWN7LIOaxNMgPSgY7c5ZB6eqlGPa7sACftvSiDEghjpn77RC7n56,LulnNHrZVxdz2Ot1fu/FXtmuBX1D9mxNLjQyfN0AiHb2Q85qGLd0anQWCNuaOXJn,CUXWJFNh8M21UN7bvGBNe0dbCumJFmbpqWQ2wrAZBso/lpv97paoaf/xzGFwYrgr,haqyAs0EJOn1oE8lqApkuorFOrgNb4CZJGz85KKJgfErin7VLR6+V9AcrEeUTXie,0wIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQBzDFQdfZcNQLr8RthsjkuUS7jftm+w,XrgGZ6EPq9andnj0EPL/r+3O2O56eOSHE8XhtJC/9i/aY3gWKCSB1TiZX3i2JJ/O,zn3o5ysEtiDN+pjYMj/xEYbGQShmrDBvjgiKWR5ADZ4A/p8axcAZK+y/CGs9g3lZ,OfpRwBpPxa0q4rU3eo25MEmhbqoJD4N39piczXhR02GZ2sFEka4bdWUGezdm9/Cb,J8PF2AjrD9dp3s5ulQapArMMZszE9w4zbNbgYevRfKERgHq3tedy2J9ukE4BUO5m,taUDGSBEHS37pjs5LtdcZmVonsD04TqIrlZCMAkApHI9r/pPDi1CAluJ,-----END CERTIFICATE-----",
+      "Description": "Change your public SSL key newlines to commas."
+    },
+
+    "SSLPrivateKey": {
+      "Type": "CommaDelimitedList",
+      "NoEcho": "true",
+      "Default": "-----BEGIN RSA PRIVATE KEY-----,MIIEpQIBAAKCAQEAsV4APYXFTIvUrFl46OJ26dnv2x6yXbV+WH1f2S0i6/1a1b/7,hLhPa8S9xxPwWh/ykpZvrNV3tAZ04fA6R68YBq29Vd5APZNrOWN7LIOaxNMgPSgY,7c5ZB6eqlGPa7sACftvSiDEghjpn77RC7n56LulnNHrZVxdz2Ot1fu/FXtmuBX1D,9mxNLjQyfN0AiHb2Q85qGLd0anQWCNuaOXJnCUXWJFNh8M21UN7bvGBNe0dbCumJ,FmbpqWQ2wrAZBso/lpv97paoaf/xzGFwYrgrhaqyAs0EJOn1oE8lqApkuorFOrgN,b4CZJGz85KKJgfErin7VLR6+V9AcrEeUTXie0wIDAQABAoIBAQCJiwHYs9HqqE0G,UmQHBQd+FXmBjO546PPPn3oiqnP4WYKFW9mqdFtykSEyLm4nFbtAndSATRIE0zT0,uRwY1tlk5Hp9Clr65UUzPcgZHv14QNkxU9TxJSG5Y/ZOGJmAp/nHcqRy5NX6AXT0,V+/HjuElW+6irdm5RgCaaQ22oC2IfS5QAR+zfrEbgkKqcgE5HthM9UqzYxBMHwHs,9i2ounbmDlziR7RHu5+ggCmSMGbcLocOugLORz2pS0zMQ+WY1Bch4R00T/k/Pg2t,q33M28D523bHWoUCHOf0vb6POqFA62sJJQeb01O9sDawJQwB6QwDrUUzzwzIdDAE,yqOO4iSBAoGBAOhm4VK7mrpg6behbheqEf0/VUb2ZBT/xVDiblCYfgx1k7q6h6jn,wcJaPMe3nJCUNoCvRBja7LMb/BMLKhts3WhUPUDfhKdq/sQ57q888EomA8f++20D,pSNno/nlQ0/CfkxrCBq6gzSiTuxSamTdGkkFtbK+a0tlSUXGA+mhx4dhAoGBAMNg,iJ8CeH4l/79PGpa6Boxqq3NNdIyauxxqHbolFuQCS8ROlPnObKLXXQIGJRn6EbaO,sqNg5LWrDQQtG6gBdgtDaqQWXkoPN8GgYqNdr400RP9/26SLvDuAGPR3v27a1GNZ,mu3bXlSYgMBeA+WLEuseWl9TnBVjneW2xTiudrazAoGBAJ2ZnvW26W+45uWzYHBF,0ds2RsNPtYEUDiAS3ZJkRx514Y/AjNy7BYeiIBOj7VWSXP+ZW4mrdNblhGT5rj1Y,7zCf58YFjfTmtwwk6TsHDUCLVQccYC6GSUegMe/2TFZbY8C42I8fqnhYFUNnhGUQ,F5IrgBNN1H8VmcHqTZ7zKdchAoGBAKngSoovZMMSmR8nUZASqVT3/qEfjKIge2aG,YdiTHScdU/GY/fGCaXThWs5Ct4mxpCseQfbKbbIDyyqBahWXR6MdeCC6DjvIpYsm,v/0ZnWViOEgLTNfyY7U8ePY/FGT3wkmsBIih/5AAlZotZKf2V3m1h5BxKzpxxj2Q,wES7dR7/AoGAfMrRP0+MedNHM9D0xL3pnzlPIia5ud8qx0bakdU6I7Cs+PGGH0ya,9D3OIenVmzZCfslifMWCkIKbgn6H/je5fbVAOuylE7w1QzA55vn53QRyLkPcej5t,jRktZBy7qY7jdbvXIwVpMOnUaodxvQFvfbu2VgsktEAbOQWjKRKlPLY=,-----END RSA PRIVATE KEY-----",
+      "Description": "Change your private SSL key newlines to commas."
+    }
+
+  },
+
+  "Mappings" : {
+
+    "vADCAMI" : {
+      "ap-south-1" : { "104r1" : "ami-37cabd58", "110" : "ami-f9bcd696", "111" : "ami-856115ea", "171" : "ami-b73f4ed8" },
+      "eu-west-2" : { "104r1" : "ami-f8e0ea9c", "111" : "ami-60212b04", "171" : "ami-72a1ab16" },
+      "eu-west-1" : { "104r1" : "ami-014b6872", "110" : "ami-4f0f963c", "111" : "ami-3bd89748", "171" : "ami-04f7a862" },
+      "ap-northeast-2" : { "104r1" : "ami-ced701a0", "110" : "ami-3d4f8453", "111" : "ami-5ffb2f31", "171" : "ami-17e83979" },
+      "ap-northeast-1" : { "104r1" : "ami-d1e289b6", "110" : "ami-b17480d0", "111" : "ami-381dba59", "171" : "ami-1a7e047d" },
+      "sa-east-1" : { "104r1" : "ami-df65fdb3", "110" : "ami-792ea415", "111" : "ami-a362ffcf", "171" : "ami-b686e3da" },
+      "ca-central-1" : { "104r1" : "ami-cf2496ab", "111" : "ami-ea84368e", "171" : "ami-52d56836" },
+      "ap-southeast-1" : { "104r1" : "ami-c3852ba0", "110" : "ami-826bb8e1", "111" : "ami-ab4fe9c8", "171" : "ami-76e05515" },
+      "ap-southeast-2" : { "104r1" : "ami-51a19a32", "110" : "ami-983e16fb", "111" : "ami-5a5e6339", "171" : "ami-74303717" },
+      "eu-central-1" : { "104r1" : "ami-595e9e36", "110" : "ami-93dc34fc", "111" : "ami-9e30c9f1", "171" : "ami-6ba36d04" },
+      "us-east-1" : { "104r1" : "ami-8f120598", "110" : "ami-7f0bc812", "111" : "ami-a87626bf", "171" : "ami-ca0effdc" },
+      "us-east-2" : { "104r1" : "ami-d1c49eb4", "111" : "ami-e03a6085", "171" : "ami-9f5a7ffa" },
+      "us-west-1" : { "104r1" : "ami-854b1ae5", "110" : "ami-52397d32", "111" : "ami-dbfdb5bb", "171" : "ami-86d082e6" },
+      "us-west-2" : { "104r1" : "ami-aaa215ca", "110" : "ami-913df9f1", "111" : "ami-d12c89b1", "171" : "ami-38f04958" }
+    },
+
+    "vADCPuppetModuleVersion" : {
+      "PMVers": {
+        "103r1": " '>=1.37.0 < 1.38.0' ",
+        "104": " '>=1.38.0 < 1.39.0' ",
+        "110": " '>=1.39.0 < 1.310.0' ",
+        "111": " '>=1.310.0 < 1.311.0' ",
+        "171": " '>=1.311.0 < 1.312.0' "
+      }
+    },
+
+    "UbuntuAMI" : {
+      "ap-south-1" : { "AMI" : "ami-19f78076" },
+      "eu-west-2" : { "AMI" : "ami-45eae021" },
+      "eu-west-1" : { "AMI" : "ami-17fda671" },
+      "ap-northeast-2" : { "AMI" : "ami-7669be18" },
+      "ap-northeast-1" : { "AMI" : "ami-16b0f671" },
+      "sa-east-1" : { "AMI" : "ami-10abcf7c" },
+      "ca-central-1" : { "AMI" : "ami-70299b14" },
+      "ap-southeast-1" : { "AMI" : "ami-bda410de" },
+      "ap-southeast-2" : { "AMI" : "ami-c83335ab" },
+      "eu-central-1" : { "AMI" : "ami-d93cf5b6" },
+      "us-east-1" : { "AMI" : "ami-af22d9b9" },
+      "us-east-2" : { "AMI" : "ami-41d48e24" },
+      "us-west-1" : { "AMI" : "ami-5ca3fe3c" },
+      "us-west-2" : { "AMI" : "ami-4c0bb02c" }
+    }
+
+  },
+
+  "Conditions" : {
+    "US-East-1": { "Fn::Equals" : [{ "Ref" : "AWS::Region" }, "us-east-1"] }
+  },
+
+  "Resources": {
+
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VPCCIDR"
+        },
+        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": "true",
+        "Tags": [
+          {  "Key": "Application",
+            "Value": "vADC Quick Start"
+          },
+
+          { "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "VPC" ] ] }
+          }
+
+        ]
+      }
+    },
+
+    "DHCPOptions" : {
+      "Type": "AWS::EC2::DHCPOptions",
+      "Properties": {
+        "DomainName": {
+          "Fn::If": [
+            "US-East-1",
+            "ec2.internal",
+            { "Fn::Join": [ ".", [ { "Ref" : "AWS::Region" }, "compute.internal" ] ] }
+          ]
+        },
+        "DomainNameServers": [ "AmazonProvidedDNS" ]
+      }
+    },
+
+    "VPCDHCPOptionsAssociation" : {
+      "Type" : "AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "DhcpOptionsId" : {"Ref" : "DHCPOptions"}
+      }
+    },
+
+    "PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnetCIDR1"
+        },
+        "Tags": [
+          { "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSub1" ] ] }
+          }
+        ],
+        "AvailabilityZone": {
+          "Fn::Select": [ "0", { "Ref": "AZs" } ]
+        }
+      }
+    },
+
+    "PublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnetCIDR2"
+        },
+        "Tags": [
+          { "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSub2" ] ] }
+          }
+        ],
+        "AvailabilityZone": {
+          "Fn::Select": [ "1", { "Ref": "AZs" } ]
+        }
+      }
+    },
+
+    "PrivateSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PrivateSubnetCIDR1"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub1" ] ] }
+          }
+        ],
+        "AvailabilityZone": {
+          "Fn::Select": [ "0", { "Ref": "AZs" } ]
+        }
+      }
+    },
+
+    "PrivateSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PrivateSubnetCIDR2"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSub2" ] ] }
+          }
+        ],
+        "AvailabilityZone": {
+          "Fn::Select": [ "1", { "Ref": "AZs" } ]
+        }
+      }
+    },
+
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "IGW" ] ] }
+          }
+        ]
+      }
+    },
+
+    "AttachGateway": {
+      "DependsOn": "InternetGateway",
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+
+    "PublicSubnetRouteTable": {
+      "DependsOn": "AttachGateway",
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PubSubRouteTab" ] ] }
+          }
+        ]
+      }
+    },
+
+    "PublicRoute1": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "AttachGateway",
+        "Properties": {
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+
+    "PublicSubnet1RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        }
+      }
+    },
+
+    "PublicSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PublicSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        }
+      }
+    },
+
+    "vADCSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "vADC Access Rules",
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "-1",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "RemoteAccessCIDR"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "9090",
+            "ToPort": "9090",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "9090",
+            "ToPort": "9090",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "9080",
+            "ToPort": "9080",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "9080",
+            "ToPort": "9080",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8083",
+            "ToPort": "8083",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8086",
+            "ToPort": "8086",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "11000",
+            "ToPort": "11000",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "11002",
+            "ToPort": "11002",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "11007",
+            "ToPort": "11007",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "9070",
+            "ToPort": "9070",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8092",
+            "ToPort": "8092",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "123",
+            "ToPort": "123",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADCSG" ] ] }
+          }
+        ]
+      }
+    },
+
+    "vADCIAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [ "ec2.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "vADCIAMPolicy",
+            "PolicyDocument": {
+              "Version" : "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:DescribeRegions",
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeAddresses",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:AssociateAddress",
+                    "ec2:DisassociateAddress",
+                    "ec2:AllocateAddress",
+                    "ec2:ReleaseAddress",
+                    "ec2:AssignPrivateIPAddresses",
+                    "ec2:UnAssignPrivateIpAddresses",
+                    "ec2:RunInstances",
+                    "ec2:CreateTags",
+                    "ec2:TerminateInstances"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:DeleteTags"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    "vADCInstanceIAMProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "vADCIAMRole"
+          }
+        ]
+      }
+    },
+
+    "TrafficIP1": {
+      "Type": "AWS::EC2::EIP",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+    "TrafficIP2": {
+      "Type": "AWS::EC2::EIP",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+    "vADCGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADC" ] ] },
+            "PropagateAtLaunch": "true"
+          },
+          {
+            "Key": "ClusterID",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "vADC-Cluster" ] ] },
+            "PropagateAtLaunch": "true"
+          }
+        ],
+        "LaunchConfigurationName": {
+          "Ref": "vADCLaunchConfig"
+        },
+        "MinSize": "2",
+        "MaxSize": "2",
+        "DesiredCapacity": "2",
+        "VPCZoneIdentifier": [
+          { "Ref": "PublicSubnet1" },
+          { "Ref": "PublicSubnet2" }
+        ]
+      }
+    },
+
+    "vADCLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "configSets" : {
+            "default" : [ "CreateFiles", "RunCommands" ]
+          },
+
+          "CreateFiles" : {
+            "files" : {
+              "/tmp/autocluster.sh" : {
+                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet/autocluster.sh",
+                "context": {
+                  "ClusterID": { "Fn::Join": [ "-", [
+                    { "Ref": "AWS::StackName" },
+                    "vADC-Cluster"
+                  ]]},
+                  "AdminPass": { "Ref": "AdminPass" },
+                  "Region": { "Ref": "AWS::Region" },
+                  "Verbose": "Yes"
+                },
+                "mode": "000755",
+                "owner": "root"
+              },
+              "/tmp/housekeeper.sh" : {
+                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet/housekeeper.sh",
+                "context": {
+                  "ClusterID": { "Fn::Join": [ "-", [
+                    { "Ref": "AWS::StackName" },
+                    "vADC-Cluster"
+                  ]]},
+                  "Region": { "Ref": "AWS::Region" },
+                  "Verbose": "Yes"
+                },
+                "mode": "000755",
+                "owner": "root"
+              },
+              "/tmp/setup_stuff.sh" : {
+                "content": { "Fn::Join": [ "", [
+                  "#!/bin/bash\n",
+                  "echo \"developer_mode_accepted     yes\" >> /opt/zeus/zxtm/global.cfg\n",
+                  "echo \"rest!enabled     Yes\" >> /opt/zeus/zxtm/conf/settings.cfg\n",
+                  "sed -i -e \"/flipper.autofailback/d\" /opt/zeus/zxtm/conf/settings.cfg\n",
+                  "echo 'flipper!autofailback     Yes' >> /opt/zeus/zxtm/conf/settings.cfg\n",
+                  "cd /tmp\n",
+                  "curl \"https://s3.amazonaws.com/aws-cli/awscli-bundle.zip\" -o \"awscli-bundle.zip\"\n",
+                  "unzip awscli-bundle.zip\n",
+                  "./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws\n",
+                  "rm -rf awscli*\n",
+                  "wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64\n",
+                  "mv jq-linux64 /usr/local/bin/jq\n",
+                  "chmod +x /usr/local/bin/jq\n",
+                  "mkdir -p /opt/aws\n",
+                  "mv /tmp/housekeeper.sh /opt/aws/\n",
+                  "rm -f /tmp/ctab.txt\n",
+                  "echo \"*/5 * * * * /opt/aws/housekeeper.sh > /var/log/housekeeper-out.log 2>&1\" > /tmp/ctab.txt\n",
+                  "exit 0\n",
+                  "\n"
+                ]]},
+                "mode": "000755",
+                "owner": "root"
+              }
+            }
+          },
+
+          "RunCommands" : {
+            "commands" : {
+
+              "01-run_setup_stuff" : {
+                "command" : "/tmp/setup_stuff.sh"
+              },
+
+              "02-del_setup_script" : {
+                "command" : "rm -f /tmp/setup_stuff.sh"
+              },
+
+              "03-run_autocluster" : {
+                "command" : "/tmp/autocluster.sh > /tmp/autocluster-out.log 2>&1"
+              },
+
+              "04-del_autocluster_script" : {
+                "command" : "rm -f /tmp/autocluster.sh"
+              },
+
+              "05-add_crontab" : {
+                "command" : "crontab /tmp/ctab.txt"
+              },
+
+              "06-del_ctab_txt" : {
+                "command" : "rm -f /tmp/ctab.txt"
+              },
+
+              "99-wait_1_min_then_signal_that_we_are_done" : {
+                "command" : { "Fn::Join" : ["", [
+                  "sleep 60 && /usr/local/bin/cfn-signal -e 0 ",
+                  "-d https://$(curl http://169.254.169.254/latest/meta-data/public-ipv4):9090 ",
+                  "'",
+                  { "Ref" : "WaitHandle01" },
+                  "'"
+                ]]}
+              }
+
+            }
+          }
+        }
+      },
+
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "IamInstanceProfile": { "Ref": "vADCInstanceIAMProfile"},
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "AssociatePublicIpAddress": "true",
+        "ImageId": {
+          "Fn::FindInMap": [
+            "vADCAMI",
+            { "Ref": "AWS::Region" },
+            { "Ref": "vADCVers" }
+          ]
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "vADCSecurityGroup"
+          }
+        ],
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "password=",
+            { "Ref" : "AdminPass" },
+          " accept_license=y",
+          " cfn_stack=",
+            { "Ref" : "AWS::StackName" },
+          " cfn_resource=",
+            "vADCLaunchConfig",
+          " cfn_region=",
+            { "Ref" : "AWS::Region" }
+        ]]}}
+      }
+    },
+
+
+    "WaitHandle01": {
+        "Type": "AWS::CloudFormation::WaitConditionHandle",
+        "Properties": {}
+    },
+
+    "WaitCondition01": {
+        "Type": "AWS::CloudFormation::WaitCondition",
+        "DependsOn": "vADCGroup",
+        "Properties": {
+            "Handle": {
+                "Ref": "WaitHandle01"
+            },
+            "Timeout": "600",
+            "Count": "2"
+        }
+    },
+
+    "PuppetServerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Puppet Server Access Rules",
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "-1",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "RemoteAccessCIDR"
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PuppetSG" ] ] }
+          }
+        ]
+      }
+    },
+
+    "PuppetIAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [ "ec2.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "vADCIAMPolicy",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:DescribeInstances"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    "PuppetInstanceIAMProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "PuppetIAMRole"
+          }
+        ]
+      }
+    },
+
+    "PuppetASG": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "DesiredCapacity": "1",
+        "LaunchConfigurationName": {
+          "Ref": "PuppetLaunchConfig"
+        },
+        "MaxSize": "1",
+        "MinSize": "1",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "Puppet" ] ] },
+            "PropagateAtLaunch": "true"
+          }
+        ],
+        "VPCZoneIdentifier": [
+          { "Ref": "PublicSubnet1" },
+          { "Ref": "PublicSubnet2" }
+        ]
+      }
+    },
+
+    "PuppetLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "configSets" : {
+            "default" : [ "CreateFiles" ]
+          },
+          "CreateFiles": {
+            "files" : {
+              "/root/UpdateClusterConfig.sh": {
+                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet/UpdateClusterConfig.sh",
+                "context": {
+                  "ClusterID": { "Fn::Join": [ "-", [
+                    { "Ref": "AWS::StackName" },
+                    "vADC-Cluster"
+                  ]]},
+                  "Region": { "Ref": "AWS::Region" },
+                  "Verbose": "Yes",
+                  "Pool": "WebPool",
+                  "PoolTag": { "Fn::Join": [ "-", [
+                    { "Ref": "AWS::StackName" },
+                    "WebServer"
+                  ]]}
+                },
+                "mode": "000755",
+                "owner": "root"
+              },
+              "/root/cluster-config-template.pp" : {
+                "source": { "Ref": "AppConfigURL" },
+                "context": {
+                  "AdminPass": { "Ref": "AdminPass" },
+                  "SSLPrivateKey": { "Fn::Join" : [ "\\n", { "Ref": "SSLPrivateKey"} ] },
+                  "SSLPublicKey": { "Fn::Join" : [ "\\n", { "Ref": "SSLPublicKey"} ] },
+                  "TrafficIPs": { "Fn::Join" : [ "",
+                    "\"", { "Ref": "TrafficIP1" }, "\",",
+                    "\"", { "Ref": "TrafficIP2" }, "\""
+                  ]}
+                }
+              },
+              "/root/puppet-apply.sh" : {
+                "content": { "Fn::Join": [ "", [
+                  "#!/bin/bash\n",
+                  "cd /root\n",
+                  "/root/UpdateClusterConfig.sh\n",
+                  "if [[ \"$?\" == \"10\" && -f cluster-config.pp ]]; then\n",
+                  "  puppet apply cluster-config.pp > /var/log/puppet-out.log 2>&1\n",
+                  "  if [[ \"$?\" != \"0\" ]]; then\n",
+                  "    echo \"Something went wrong with puppet run at $(date)\" >> /root/puppetrun.log\n",
+                  "    exit 1\n",
+                  "  fi\n",
+                  "fi\n"
+                ]]},
+                "mode": "000755",
+                "owner": "root"
+              }
+            }
+          }
+        }
+      },
+
+      "Properties": {
+        "AssociatePublicIpAddress": "true",
+        "IamInstanceProfile": { "Ref": "PuppetInstanceIAMProfile"},
+        "ImageId": {
+          "Fn::FindInMap": [
+            "UbuntuAMI",
+            { "Ref": "AWS::Region" },
+            "AMI"
+          ]
+        },
+        "InstanceType": "t2.nano",
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "PuppetServerSecurityGroup"
+          }
+        ],
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -xe\n",
+          "apt-get update -y\n",
+          "apt-get install puppet -y\n",
+          "puppet module install tuxinvader-brocadevtm --version ",
+          { "Fn::FindInMap": [
+            "vADCPuppetModuleVersion",
+            "PMVers",
+            { "Ref": "vADCVers" }
+          ] },
+          "\n",
+          "apt-get install python-pip -y\n",
+          "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+          "apt-get install awscli -y\n",
+          "apt-get install jq -y\n",
+
+          "/usr/local/bin/cfn-init -v ",
+          "         --stack ", { "Ref" : "AWS::StackName" },
+          "         --resource PuppetLaunchConfig ",
+          "         --region ", { "Ref" : "AWS::Region" }, "\n",
+          "sleep 60\n",
+          "cd /root\n",
+          "rm -f crtab.txt\n",
+          "echo \"#*/5 * * * * /root/puppet-apply.sh > /var/log/puppet-apply-out.log 2>&1\" > crtab.txt\n",
+          "crontab crtab.txt\n",
+          "rm -f crtab.txt\n"
+        ]]}}
+      }
+    },
+
+    "NAT1EIP": {
+      "Type": "AWS::EC2::EIP",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+    "NATGateway1": {
+      "Type": "AWS::EC2::NatGateway",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+              "NAT1EIP",
+              "AllocationId"
+          ]
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnet1"
+        }
+      }
+    },
+
+    "PrivateSubnetRouteTable1": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "PriSubRouteTab1" ] ] }
+          }
+        ]
+      }
+    },
+
+    "PrivateRoute1": {
+      "Type": "AWS::EC2::Route",
+        "Properties": {
+        "RouteTableId": {
+          "Ref": "PrivateSubnetRouteTable1"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "NATGateway1"
+        }
+      }
+    },
+
+    "PrivateSubnet1RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateSubnetRouteTable1"
+        }
+      }
+    },
+
+    "PrivateSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateSubnetRouteTable1"
+        }
+      }
+    },
+
+    "WebServerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Web Server Access Rules",
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "-1",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "WebSG" ] ] }
+          }
+        ]
+      }
+    },
+
+    "WebServerGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, "WebServer" ] ] },
+            "PropagateAtLaunch": "true"
+          }
+        ],
+        "LaunchConfigurationName": {
+          "Ref": "WSLaunchConfig"
+        },
+        "MinSize": "2",
+        "MaxSize": "2",
+        "DesiredCapacity": "2",
+        "VPCZoneIdentifier": [
+          { "Ref": "PrivateSubnet1" },
+          { "Ref": "PrivateSubnet2" }
+        ]
+      }
+    },
+
+    "WSLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "Comment": "Install a simple application",
+        "AWS::CloudFormation::Init" : {
+          "configSets" : {
+            "default" : [ "CreateFiles", "RunCommands" ]
+          },
+
+          "CreateFiles": {
+          },
+
+          "RunCommands" : {
+            "commands" : {
+              "01-create-index-html" : {
+                "command" : "echo \"developer_mode_accepted     yes\" > /tmp/aaa"
+              }
+            }
+          }
+        }
+      },
+
+      "Properties": {
+        "InstanceType": "t2.nano",
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "AssociatePublicIpAddress": "false",
+        "ImageId": {
+          "Fn::FindInMap": [
+            "UbuntuAMI",
+            { "Ref": "AWS::Region" },
+            "AMI"
+          ]
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "WebServerSecurityGroup"
+          }
+        ],
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -xe\n",
+          "apt-get update -y\n",
+          "apt-get install apache2 -y\n",
+          "apt-get install python-pip -y\n",
+          "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+
+          "iid=$(curl http://169.254.169.254/latest/meta-data/instance-id)\n",
+          "lip=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)\n",
+          "cat > /var/www/html/index.html <<EOF\n",
+          "<html>\n",
+          "This is a simple page served from \"$iid\"<br>\n",
+          "running with IP of \"$lip\"<br>\n",
+          "</html>\n",
+          "EOF\n",
+
+          "/usr/local/bin/cfn-init -v ",
+          "         --stack ", { "Ref" : "AWS::StackName" },
+          "         --resource WebServerGroup ",
+          "         --region ", { "Ref" : "AWS::Region" }, "\n"
+        ]]}}
+      }
+    },
+
+    "DNS": {
+      "Type": "AWS::Route53::HostedZone",
+      "Properties": {
+        "HostedZoneConfig": {
+          "Comment": "Hosted zone for the example app"
+        },
+        "Name": {
+          "Ref": "DomainName"
+        }
+      }
+    },
+
+    "AppDNSRecord1" : {
+      "Type" : "AWS::Route53::RecordSetGroup",
+      "Properties" : {
+        "HostedZoneId" : {
+          "Ref" : "DNS"
+        },
+        "Comment" : "Records for my vADC traffic group IPs.",
+        "RecordSets" : [
+          {
+            "Name": {
+              "Fn::Join": [
+                "", [ "www", ".", { "Ref": "DomainName" }, "." ]
+              ]
+            },
+            "Type": "A",
+            "TTL": "900",
+            "ResourceRecords": [
+              { "Ref": "TrafficIP1" },
+              { "Ref": "TrafficIP2" }
+            ]
+          }
+        ]
+      }
+    },
+
+    "AppDNSRecord2" : {
+      "DependsOn": "AppDNSRecord1",
+      "Type" : "AWS::Route53::RecordSetGroup",
+      "Properties" : {
+        "HostedZoneId" : {
+          "Ref" : "DNS"
+        },
+        "Comment" : "Apex alias record for my vADC traffic group IPs.",
+        "RecordSets" : [
+          {
+            "Name": {
+              "Fn::Join": [
+                "", [ { "Ref": "DomainName" }, "." ]
+              ]
+            },
+            "Type": "A",
+            "AliasTarget": {
+              "HostedZoneId": { "Ref": "DNS" },
+              "DNSName": {
+                "Fn::Join": [
+                  "", [ "www", ".", { "Ref": "DomainName" }, "." ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+
+  },
+
+  "Outputs": {
+
+    "ApplicationData": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WaitCondition01",
+          "Data"
+        ]
+      },
+      "Description": "The public IP addresses of the 2 x vADC instances."
+    }
+  }
+}

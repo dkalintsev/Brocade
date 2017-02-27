@@ -67,7 +67,7 @@ For a demo / test purposes, you can use this template directly. Make note of the
 
 - Template doesn't add a license key or link your cluster to a Services Director.
 
-- Tested with vADC version 11.0 and 11.1. Please let me know if you hit problems.
+- Tested with vADC version 11.0, 11.1, and 17.1. Please let me know if you hit problems.
 
 ## How to use
 
