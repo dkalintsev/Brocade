@@ -236,7 +236,7 @@ for instance in ${list[@]}; do
     getInstanceDnsName $instance
     dnsname=$(cat $jqResFName)
     logMsg "010: Private DNS name for Instance $instance is $dnsname"
-    if [[ "${list[@]: -1}" != "$dnsname" ]]; then
+    if [[ "${list[@]: -1}" != "$instance" ]]; then
         vADCnDNS=$vADCnDNS"\"$dnsname\","
     else
         vADCnDNS=$vADCnDNS"\"$dnsname\""
@@ -267,7 +267,7 @@ else
         IP=$(cat $jqResFName)
         logMsg "013: Private IP of Instance $instance is $IP"
         a="$left_in""$IP""$right_in"
-        if [[ "${list[@]: -1}" != "$IP" ]]; then
+        if [[ "${list[@]: -1}" != "$instance" ]]; then
             nodes="$nodes""$a"","
         else
             nodes="$nodes""$a"
