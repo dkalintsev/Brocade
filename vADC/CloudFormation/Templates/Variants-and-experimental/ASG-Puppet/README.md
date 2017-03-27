@@ -1,4 +1,4 @@
-# Autoclustering Brocade vADC + cluster-config-template web server + config by Puppet
+# Autoclustering Brocade vADC + example web server + config by Puppet
 
 This template builds on a couple of earlier templates: [vADC Cluster configured by Puppet](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet) and [Autoclustering vADCs](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants-and-experimental/Autoclustering).
 
@@ -7,7 +7,7 @@ As before, this is a proof-of-concept quality code, which is meant to provide a 
 ## What's in the box
 
 * `vADC-ASG-Puppet.template` - main template. As usual, download and deploy from your computer via CLI or CloudFormation UI, or use "Launch Stack" button below.
-* `cluster-config-template.pp` - cluster-config-template parametrised Puppet manifest for the vADC cluster config
+* `cluster-config-template.pp` - example parametrised Puppet manifest for the vADC cluster config
 * `UpdateClusterConfig.sh` - script that generates vADC cluster config populated with the IPs of currently running vADC instances and backend pool servers. It is run periodically to keep cluster config up to date if/when necessary.
 * `autocluster.sh` is ran once when a vADC is started by ASG. It checks for an existing cluster looking for specific tags. If it finds an existing cluster, it joins. If it doesn't, elections are run and if won the new instance forms a new cluster. The script is then terminated and vADC enters regular operation.
 * `housekeeper.sh` is ran from cron on each running vADC instance in the cluster. It performs the following activities:
@@ -25,13 +25,13 @@ The first part deploys an Auto Scaling Group that spawns 2 vADC instances, set u
 The second part of the template is concerned with two additonal bits:
 
 - 2 x Web servers, representing our "application", started through the second Auto Scaling Group; and
-- A third Auto Scaling Group that spawns one EC2 instance with Puppet that (a) pushes the initial config to the vADC cluster, and (b) watches for any changes in running vADC EC2 instances and Web servers' IPs, for cluster-config-template if an AutoScale event happens, and updates vADC cluster config accordingly.
+- A third Auto Scaling Group that spawns one EC2 instance with Puppet that (a) pushes the initial config to the vADC cluster, and (b) watches for any changes in running vADC EC2 instances and Web servers' IPs, for example if an AutoScale event happens, and updates vADC cluster config accordingly.
 
 Since the template creates an Internet-facing "web app", it also creates two EIPs that will be used for a vADC Traffic Group. vADCs sort between themselves which one of them owns which of these EIPs.
 
 Template also creates a Route53 DNS zone, by default for domain `corp.local` and creates A records for `www.corp.local` and ALIAS for `corp.local` pointing to the two EIPs. If you would like to access your demo app at http(s)://www.corp.local, you'll need to delegate the NS for corp.local to the AWS Route53 servers associated with your newly created zone. To find out what these are, you'll need to open AWS Console UI, go to Route53, and look for the NS records for your hosted zone (`corp.local` if you used the defaults).
 
-Alternatively you can simply create the A records on your DNS server directly. `Outputs` section in the stack prints out the domain name and public IP addresses that vADCs will be listening on, for cluster-config-template:
+Alternatively you can simply create the A records on your DNS server directly. `Outputs` section in the stack prints out the domain name and public IP addresses that vADCs will be listening on, for example:
 
 ```
 URL: corp.local, IP1: 52.65.69.185, IP2: 52.62.54.195
