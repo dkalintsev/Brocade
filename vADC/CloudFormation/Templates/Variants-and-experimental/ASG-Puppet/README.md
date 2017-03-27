@@ -51,7 +51,7 @@ While clearly being a demo, the template was designed to provide building blocks
 2. You deploy the rest of your application.
 3. Using vADC UI and CLI, as necessary, you configure vADC cluster as your appication requires.
 4. Once the above is in place, you run [`genNodeConfig`](https://forge.puppet.com/tuxinvader/brocadevtm#tools-gennodeconfig) to create a Puppet manifest from your running configured cluster.
-5. You then edit the resulting Puppet manifest, replacing the deployment-specific bits inside the manifest, such as IP addresses, DNS names, logins/passwords, SSL certs and so on with mustache-formatted variables, e.g., {{AdminPass}}. See what this looks something like the [cluster-config-template.pp](https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet/cluster-config-template.pp) manifest file in this repo. Once done, you upload the resuting parametrised manifest somewhere where `Puppet` resource from your application stack can get it from later - Git, S3, whatever.
+5. You then edit the resulting Puppet manifest, replacing the deployment-specific bits inside the manifest, such as IP addresses, DNS names, logins/passwords, SSL certs and so on with mustache-formatted variables, e.g., {{AdminPass}}. This will look something like the [cluster-config-template.pp](https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet/cluster-config-template.pp) manifest file in this repo. Once done, you upload the resuting parametrised manifest somewhere where `Puppet` resource from your application stack can get it from later - Git, S3, whatever.
 6. Then you grab the `PuppetASG` and `vADCGroup` resources from this template with their dependencies, add them to yours, adjusting the `/root/cluster-config-template.pp` section of the `PuppetLaunchConfig` resource such that it points to the URL of your parametrised manifest, and has the appropriate variables in the `context` section.
 
 If all goes well, you should be all set. :)
@@ -72,9 +72,9 @@ When generating your own manifest, please make sure to give `-v` parameter the R
 
 ## How to use
 
-You can deploy this template directly through AWS console or CLI, by downloading it to your computer first. All inputs are fairly clearly labelled, and should present no trouble. Once the deployment is complete, connect to your new vADC cluster on the URL displayed in the `vADCManagementURLs` of the template's `Output`, and login as admin with the password that you've supplied, or "Password123" if you accepted the default. The HTTP/HTTPS URLs for your example web app is also there under `WebAppURLs`.
+You can deploy this template directly through AWS console or CLI, by downloading it to your computer first. All inputs are fairly clearly labelled, and should present no trouble. Once the deployment is complete, connect to your new vADC cluster on the URL displayed in the `vADCManagementURLs` of the template's `Output`, and login as admin with the password that you've supplied, or "Password123" if you accepted the default. The HTTP/HTTPS URLs for your example web app are also there under `WebAppURLs`.
 
-You can also launch this template into `us-east-1` region by clicking the "Launch Stack" button below:
+You can also launch this template into the `us-east-1` region by clicking the "Launch Stack" button below:
 
 <a href="https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Brocade-vADC-webapp&templateURL=https://s3-ap-southeast-2.amazonaws.com/7pjmj9xxfjlcnq/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet/vADC-ASG-Puppet.template"><img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png"></a>
 
@@ -106,7 +106,7 @@ You can also launch this template into `us-east-1` region by clicking the "Launc
 **A**: I'm using them as a key to look up AMI IDs in a map. CloudFormation only accepts alphanumerical characters in keys, so dots are no-go. :(
 
 **Q**: What's the story with licensing?  
-**A**: The AMIs packaged with this template correspond to Developer Edition of vADC. It has all features enabled, but is limited to 2 Mbit/s of throughput. Developer edition can be converted to a fully functional instance by giving it a valid license, either directly or through a Service Director. Alternatively, you can modify the template with the AMIs of one of the licensed versions of vADC. To help with this, you can use the [`vADC-amis.sh`](https://github.com/dkalintsev/Brocade/blob/master/CloudFormation/Tools/vADC-amis.sh) script. Modify the value of the `SKU` varible near the start of the script to the one you want, and run it from a machine that has AWS CLI installed with permissions to list AWS Marketplace items.
+**A**: The AMI IDs in this template correspond to the Developer Edition of vADC. It has all features enabled, but is limited to 2 Mbit/s of throughput. Developer edition can be converted to a fully functional instance by giving it a valid license, either directly or through a Service Director. Alternatively, you can modify the template with the AMIs of one of the licensed versions of vADC. To help with this, you can use the [`vADC-amis.sh`](https://github.com/dkalintsev/Brocade/blob/master/CloudFormation/Tools/vADC-amis.sh) script. Modify the value of the `SKU` varible near the start of the script to the one you want, and run it from a machine that has AWS CLI installed with permissions to list AWS Marketplace items.
 
 **Q**: What's the support status of this? Is this official?  
 **A**: This template is considered "experimental/unofficial", but I encourage you to open GitHub issues and/or submit pull requests as you see fit, and I'll deal with them when I can. This will also help us determine whether there's enough interest in a template, so that we can make it official/supported.
