@@ -33,15 +33,9 @@ pool_tag="{{PoolTag}}"
 # Creating temp filenames to keep lists of running and clustered instances, and delta between the two.
 #
 rand_str=$(cat /dev/urandom | env LC_CTYPE=C tr -cd 'a-f0-9' | head -c 10)
-runningInstF="/tmp/running.$rand_str"
-clusteredInstF="/tmp/clustered.$rand_str"
-deltaInstF="/tmp/delta.$rand_str"
-filesF="/tmp/files.$rand_str"
 resFName="/tmp/aws-out.$rand_str"
 jqResFName="/tmp/jq-out.$rand_str"
 awscliLogF="/var/log/UpdateClusterConfig-out.log"
-dnsIPs="/tmp/dnsIPs.$rand_str"
-activeIPs="/tmp/activeIPs.$rand_str"
 changeSetF="/tmp/changeSetF.$rand_str"
 
 # Variables
@@ -62,9 +56,8 @@ stateTag="ClusterState"
 statusActive="Active"
 
 cleanup  () {
-    rm -f $runningInstF $clusteredInstF $deltaInstF $filesF
     rm -f $resFName $jqResFName
-    rm -f $dnsIPs $activeIPs $changeSetF
+    rm -f $changeSetF
     rm -f $lockF
 }
 
@@ -229,10 +222,11 @@ fi
 # We still have the list of vADC EC2 InstanceIDs in the $list. Let's use that to build __vADCnDNS__
 # Result should be in the format (including quotes): "host1.domain.com","host2.domain.com"
 #
-# Trivia: getting last element of an array pulled from here:
+# Trivia: getting the last element of an array was pulled from here:
 # http://stackoverflow.com/questions/1951506/bash-add-value-to-array-without-specifying-a-key
 #
 for instance in ${list[@]}; do
+    # "for" loop here is good enough since we don't expect any spaces in the array elements
     getInstanceDnsName $instance
     dnsname=$(cat $jqResFName)
     logMsg "010: Private DNS name for Instance $instance is $dnsname"
@@ -263,6 +257,7 @@ if [[ ${#list[*]} == 0 ]]; then
     nodes="$left_in""127.0.0.1""$right_in"
 else
     for instance in ${list[@]}; do
+        # "for" loop here is good enough since we don't expect any spaces in the array elements
         getInstanceIP $instance
         IP=$(cat $jqResFName)
         logMsg "013: Private IP of Instance $instance is $IP"

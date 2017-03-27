@@ -2,6 +2,18 @@
 
 This directory holds variations and experemental versions of the vADC template master from the parent directory.
 
+## `ASG-Puppet`
+
+Integration of the `Configured by Puppet` and `Autoclustering` templates. Everything (vADC instances, backend pool servers, and a cluster management instance) is in Auto Scaling Groups that can survive instance termination, individually or entirely.
+
+## `Configured by Puppet`
+
+Variant of the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates) that includes 2 x sample Web servers, and a Puppet server to configure the vADCs to serve content from these web servers. More details in [README inside](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet).
+
+## `Autoclustering`
+
+This template again is based on the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates), but uses AutoScaling Groups to deploy vADCs.
+
 ## `vADC-dual-NIC.template`
 
 This template deploys the same stack as the one in the parent directory, but with a little twist: it creates two ENIs (NICs) for each vADC instance, and connects the second ENI to the private subnet in the respective Avaiability Zone.
@@ -18,12 +30,3 @@ This template will prompt for the `Server Pool CIDR Block`, and add a route for 
 The subnet is set by default to match the 2 x private subnets' CIDRs created by this template (10.8.4.0/24 + 10.8.4.0/24). If your stack has server pool members that sit outside AWS or in a different VPC, please adjust the `Server Pool CIDR Block` accordingly.
 
 To deal with the "double default gateway" issue, template runs a couple commands during initial configuration, where it resets the configuration for the second NIC, creates a static config for it, and then brings that second NIC up. All of that is done inside `default` configSet of `AWS::CloudFormation::Init` Metadata for the vADC instances.
-
-## `Configured by Puppet`
-
-Variant of the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates) that includes 2 x sample Web servers, and a Puppet server to configure the vADCs to serve content from these web servers. More details in [README inside](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet).
-
-
-## `Autoclustering`
-
-This template again is based on the [parent template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates), but uses AutoScaling Groups to deploy vADCs. WIP at this point.

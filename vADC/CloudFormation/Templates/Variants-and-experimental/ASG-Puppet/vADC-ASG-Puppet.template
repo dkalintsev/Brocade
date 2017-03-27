@@ -1335,7 +1335,7 @@
 
   "Outputs": {
 
-    "ApplicationData": {
+    "vADCManagementURLs": {
       "Value": {
         "Fn::GetAtt": [
           "WaitCondition01",
@@ -1343,6 +1343,27 @@
         ]
       },
       "Description": "The public IP addresses of the 2 x vADC instances."
+    },
+
+    "WebAppURLs": {
+      "Description": "Your sample web app is available on these URLs.",
+      "Value": {
+        "Fn::Join": [ "", [
+          "Secure URL: https://",
+          { "Ref": "DomainName" },
+          "Insecure URL: http://",
+          { "Ref": "DomainName" },
+          ", IP1 (secure): https://",
+          { "Ref": "TrafficIP1" },
+          ", IP1 (insecure): http://",
+          { "Ref": "TrafficIP1" },
+          ", IP2 (secure): https://",
+          { "Ref": "TrafficIP2" },
+          ", IP2 (insecure): http://",
+          { "Ref": "TrafficIP2" }
+        ] ]
+      }
     }
+
   }
 }
