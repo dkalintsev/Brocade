@@ -1351,7 +1351,7 @@
         "Fn::Join": [ "", [
           "Secure URL: https://",
           { "Ref": "DomainName" },
-          "Insecure URL: http://",
+          " Insecure URL: http://",
           { "Ref": "DomainName" },
           ", IP1 (secure): https://",
           { "Ref": "TrafficIP1" },
