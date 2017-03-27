@@ -4,6 +4,11 @@ This template builds on a couple of earlier templates: [vADC Cluster configured 
 
 As before, this is a proof-of-concept quality code, which is meant to provide a starting point for you to develop a production-ready solution.
 
+The purpose of this solution is to provide a self-healing, self-managing cluster of vADCs. At this point, the solution will allow you to:
+- Terminate any or all EC2 resources (vADCs, Puppet, Web Servers), and it will self-recover.
+- Increase or reduce the size of either vADC or Web Server Auto Scaling group, and it will self-adjust to accommodate.
+- Change the instance type in the vADC Auto Scaling Group to scale vADCs up or down. You'll need to double the vADC ASG size, wait for it to converge, then half it to terminate the older vADC instances.
+
 ## What's in the box
 
 * `vADC-ASG-Puppet.template` - main template. As usual, download and deploy from your computer via CLI or CloudFormation UI, or use "Launch Stack" button below.
