@@ -4,6 +4,8 @@ This template builds on the [older parent one](https://github.com/dkalintsev/Bro
 
 As before, this is a proof-of-concept quality code, which is meant to provide a starting point for you to develop a production-ready solution.
 
+**Note**: There seems to be a change in how vADC configures node names in version 17.2, which breaks some logic used in this template. I had a look at the changes I need to make to this template to accommodate this, and decided against it. If you would like to use a template with vADC version 17.2, please use the [newer, much improved one](https://github.com/dkalintsev/Brocade/blob/master/vADC/CloudFormation/Templates/Variants-and-experimental/ASG-Puppet) instead. You'll also get the benefit of fully automated cluster management (vADCs in that newer template are run from an Auto Scaling Group).
+
 ## What's in the box
 
 * `vADC-Deploy-Puppet-EIP.template` - main template. As usual, download and deploy from your computer via CLI or CloudFormation UI, or use "Launch Stack" button below.

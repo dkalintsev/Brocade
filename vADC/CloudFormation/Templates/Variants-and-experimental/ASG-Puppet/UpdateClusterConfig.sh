@@ -178,7 +178,7 @@ oldsha=$(shasum "$manifest" | awk '{print $1}')
 
 # We need to customise cluster-config-template with the following values:
 # - __vADC1PrivateIP__ => a private IP of one of the vADCs in the cluster (with tag "Active")
-# - __vADCnDNS__ => list of Private DNS names for vADC nodes - "Node1.domain.com","Node2.domain.com"
+# - __vADCnDNS__ => list of names of vADC nodes in the cluster
 # - put private IPs of EC2s tagged with $pool_tag into the basic__nodes_table for the given $pool
 #
 # Let's collect these values, shall we?
