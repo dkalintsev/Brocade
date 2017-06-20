@@ -1,6 +1,6 @@
 # Autoclustering Brocade vADC + example web server + config by Puppet
 
-This template builds on a couple of earlier templates: [vADC Cluster configured by Puppet](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet) and [Autoclustering vADCs](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Variants-and-experimental/Autoclustering).
+This template builds on a couple of earlier templates: [vADC Cluster configured by Puppet](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Configured-by-Puppet) and [Autoclustering vADCs](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Old/Variants-and-experimental/Autoclustering).
 
 As before, this is a proof-of-concept quality code, which is meant to provide a starting point for you to develop a production-ready solution.
 
@@ -52,7 +52,7 @@ You will also notice the template creates a NAT gateway - it's there purely to p
 
 While clearly being a demo, the template was designed to provide building blocks for roughly the following real life workflow:
 
-1. You have an application that requires vADC. You could be using a [simple template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates) customised for your needs to deploy an unconfigured vADC cluster.
+1. You have an application that requires vADC. You could be using a [old simple template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Old) customised for your needs to deploy an unconfigured vADC cluster.
 2. You deploy the rest of your application.
 3. Using vADC UI and CLI, as necessary, you configure vADC cluster as your appication requires.
 4. Once the above is in place, you run [`genNodeConfig`](https://forge.puppet.com/tuxinvader/brocadevtm#tools-gennodeconfig) to create a Puppet manifest from your running configured cluster.
