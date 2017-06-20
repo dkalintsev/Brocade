@@ -166,16 +166,6 @@ getInstanceIP () {
     return 0
 }
 
-# Returns private DNS name of an instance by instance-id
-# $1 instance-id
-#
-getInstanceDnsName () {
-    safe_aws ec2 describe-instances --region $region \
-        --instance-id $1 --output json
-    cat $resFName | jq -r ".Reservations[].Instances[].NetworkInterfaces[].PrivateDnsName" > $jqResFName
-    return 0
-}
-
 ### Main()
 
 cleanup
@@ -219,23 +209,33 @@ else
     exit 0
 fi
 
-# We still have the list of vADC EC2 InstanceIDs in the $list. Let's use that to build __vADCnDNS__
+# We now need to build __vADCnDNS__, made of the names of vADCs in the cluster.
 # Result should be in the format (including quotes): "host1.domain.com","host2.domain.com"
+# In case where vADCs decided to set their names to their IPs, the names will be their IPs.
 #
 # Trivia: getting the last element of an array was pulled from here:
 # http://stackoverflow.com/questions/1951506/bash-add-value-to-array-without-specifying-a-key
 #
+# Get vADC cluster login/pass from the manifest template
+login=$(grep rest_user $manifest_template | cut -f2 -d\')
+pass=$(grep rest_pass $manifest_template | cut -f2 -d\')
+
+# Get the list of names of clustered vADCs from the cluster
+# API version 3.7 seems to work in 17.2 (which uses API v4.0). Using 3.7 for backward compatibility.
+list=( $( curl -s -u $login:$pass -k https://$vADC1PrivateIP:9070/api/tm/3.7/config/active/traffic_managers/ -o - | jq '.children[].name' ) )
+
 for instance in ${list[@]}; do
-    # "for" loop here is good enough since we don't expect any spaces in the array elements
-    getInstanceDnsName $instance
-    dnsname=$(cat $jqResFName)
-    logMsg "010: Private DNS name for Instance $instance is $dnsname"
     if [[ "${list[@]: -1}" != "$instance" ]]; then
-        vADCnDNS=$vADCnDNS"\"$dnsname\","
+        vADCnDNS=$vADCnDNS"$instance,"
     else
-        vADCnDNS=$vADCnDNS"\"$dnsname\""
+        vADCnDNS=$vADCnDNS"$instance"
     fi
 done
+
+if [[ "$vADCnDNS" == "" ]]; then
+    logMsg "010: Failed to get vTM names; bailing for now."
+    exit 0
+fi
 
 # We need to collect private IPs of the pool members. They are tagged with "Name" == $pool_tag
 # First, let's create a list of EC2 instance IDs for these.
@@ -296,10 +296,8 @@ fi
 
 if [[ -s "$changeSetF" ]]; then
     cat "$changeSetF" > "$manifest"
-    rm -f "$changeSetF"
 else
     logMsg "014: Edit resulted in an empty file for some reason. Not creating $manifest."
-    rm -f "$changeSetF"
     exit 1
 fi
 

@@ -83,12 +83,12 @@
     "vADCVers" : {
       "Description" : "Please select vADC version:",
       "Type" : "String",
-      "Default" : "171",
+      "Default" : "172",
       "AllowedValues" : [
-        "104r1",
         "110",
         "111",
-        "171"
+        "171",
+        "172"
       ],
       "ConstraintDescription" : "Must be a valid vADC version"
     },
@@ -177,7 +177,7 @@
 
     "AppConfigURL": {
       "Type": "String",
-      "Default": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/example.pp",
+      "Default": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Configured-by-Puppet/example.pp",
       "AllowedPattern" : "https?://[-a-zA-Z0-9\\.%/_]*",
       "Description": "URL of the Puppet manifest for vADC configuration.",
       "ConstraintDescription": "Please use letters, numbers, and dashes only. Apologies - this regex is rather simple."
@@ -201,20 +201,20 @@
   "Mappings" : {
 
     "vADCAMI" : {
-      "ap-south-1" : { "104r1" : "ami-37cabd58", "110" : "ami-f9bcd696", "111" : "ami-856115ea", "171" : "ami-b73f4ed8" },
-      "eu-west-2" : { "104r1" : "ami-f8e0ea9c", "111" : "ami-60212b04", "171" : "ami-72a1ab16" },
-      "eu-west-1" : { "104r1" : "ami-014b6872", "110" : "ami-4f0f963c", "111" : "ami-3bd89748", "171" : "ami-04f7a862" },
-      "ap-northeast-2" : { "104r1" : "ami-ced701a0", "110" : "ami-3d4f8453", "111" : "ami-5ffb2f31", "171" : "ami-17e83979" },
-      "ap-northeast-1" : { "104r1" : "ami-d1e289b6", "110" : "ami-b17480d0", "111" : "ami-381dba59", "171" : "ami-1a7e047d" },
-      "sa-east-1" : { "104r1" : "ami-df65fdb3", "110" : "ami-792ea415", "111" : "ami-a362ffcf", "171" : "ami-b686e3da" },
-      "ca-central-1" : { "104r1" : "ami-cf2496ab", "111" : "ami-ea84368e", "171" : "ami-52d56836" },
-      "ap-southeast-1" : { "104r1" : "ami-c3852ba0", "110" : "ami-826bb8e1", "111" : "ami-ab4fe9c8", "171" : "ami-76e05515" },
-      "ap-southeast-2" : { "104r1" : "ami-51a19a32", "110" : "ami-983e16fb", "111" : "ami-5a5e6339", "171" : "ami-74303717" },
-      "eu-central-1" : { "104r1" : "ami-595e9e36", "110" : "ami-93dc34fc", "111" : "ami-9e30c9f1", "171" : "ami-6ba36d04" },
-      "us-east-1" : { "104r1" : "ami-8f120598", "110" : "ami-7f0bc812", "111" : "ami-a87626bf", "171" : "ami-ca0effdc" },
-      "us-east-2" : { "104r1" : "ami-d1c49eb4", "111" : "ami-e03a6085", "171" : "ami-9f5a7ffa" },
-      "us-west-1" : { "104r1" : "ami-854b1ae5", "110" : "ami-52397d32", "111" : "ami-dbfdb5bb", "171" : "ami-86d082e6" },
-      "us-west-2" : { "104r1" : "ami-aaa215ca", "110" : "ami-913df9f1", "111" : "ami-d12c89b1", "171" : "ami-38f04958" }
+      "ap-south-1" : { "110" : "ami-f9bcd696", "111" : "ami-856115ea", "171" : "ami-b73f4ed8", "172" : "ami-34512e5b" },
+      "eu-west-2" : { "111" : "ami-60212b04", "171" : "ami-72a1ab16", "172" : "ami-2baeb94f" },
+      "eu-west-1" : { "110" : "ami-4f0f963c", "111" : "ami-3bd89748", "171" : "ami-04f7a862", "172" : "ami-121c0374" },
+      "ap-northeast-2" : { "110" : "ami-3d4f8453", "111" : "ami-5ffb2f31", "171" : "ami-17e83979", "172" : "ami-d89946b6" },
+      "ap-northeast-1" : { "110" : "ami-b17480d0", "111" : "ami-381dba59", "171" : "ami-1a7e047d", "172" : "ami-a7676ec0" },
+      "sa-east-1" : { "110" : "ami-792ea415", "111" : "ami-a362ffcf", "171" : "ami-b686e3da", "172" : "ami-d1cda5bd" },
+      "ca-central-1" : { "111" : "ami-ea84368e", "171" : "ami-52d56836", "172" : "ami-5cf24d38" },
+      "ap-southeast-1" : { "110" : "ami-826bb8e1", "111" : "ami-ab4fe9c8", "171" : "ami-76e05515", "172" : "ami-9ce765ff" },
+      "ap-southeast-2" : { "110" : "ami-983e16fb", "111" : "ami-5a5e6339", "171" : "ami-74303717", "172" : "ami-8e6677ed" },
+      "eu-central-1" : { "110" : "ami-93dc34fc", "111" : "ami-9e30c9f1", "171" : "ami-6ba36d04", "172" : "ami-1861c577" },
+      "us-east-1" : { "110" : "ami-7f0bc812", "111" : "ami-a87626bf", "171" : "ami-ca0effdc", "172" : "ami-74d9fd62" },
+      "us-east-2" : { "111" : "ami-e03a6085", "171" : "ami-9f5a7ffa", "172" : "ami-fca18799" },
+      "us-west-1" : { "110" : "ami-52397d32", "111" : "ami-dbfdb5bb", "171" : "ami-86d082e6", "172" : "ami-c2b597a2" },
+      "us-west-2" : { "110" : "ami-913df9f1", "111" : "ami-d12c89b1", "171" : "ami-38f04958", "172" : "ami-56ebe32f" }
     },
 
     "vADCPuppetModuleVersion" : {
@@ -223,7 +223,8 @@
         "104": " '>=1.38.0 < 1.39.0' ",
         "110": " '>=1.39.0 < 1.310.0' ",
         "111": " '>=1.310.0 < 1.311.0' ",
-        "171": " '>=1.311.0 < 1.312.0' "
+        "171": " '>=1.311.0 < 1.312.0' ",
+        "172": " '>=1.40.0 < 1.41.0' "
       }
     },
 
@@ -1015,7 +1016,7 @@
           "CreateFiles": {
             "files" : {
               "/root/QueryWebServers.sh": {
-                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Variants-and-experimental/Configured-by-Puppet/QueryWebServers.sh",
+                "source": "https://raw.githubusercontent.com/dkalintsev/Brocade/master/vADC/CloudFormation/Templates/Configured-by-Puppet/QueryWebServers.sh",
                 "mode": "000755",
                 "owner": "root"
               },
