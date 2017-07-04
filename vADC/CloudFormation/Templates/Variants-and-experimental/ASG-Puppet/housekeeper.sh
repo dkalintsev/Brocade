@@ -339,10 +339,11 @@ fi
 # Make sure this instance has the right number of private IP addresses - as many as there are
 # Traffic IPs assigned to all TIP Groups
 #
-# ip-10-8-2-115:~# echo 'TrafficIPGroups.getIPAddresses "Web VIP"' | /usr/bin/zcli 
-# ["13.54.192.46","54.153.152.253"]
+# Sample output we're working on:
 # ip-10-8-2-115:~# echo 'TrafficIPGroups.getTrafficIPGroupNames' | /usr/bin/zcli 
 # ["Web VIP"]
+# ip-10-8-2-115:~# echo 'TrafficIPGroups.getIPAddresses "Web VIP"' | /usr/bin/zcli 
+# ["13.54.192.46","54.153.152.253"]
 #
 # Get configured TIP Groups
 tipArray=( )
@@ -386,6 +387,11 @@ done
 
 # We would like to always have at least two secondary IPs available, to ensure
 # configuration for a typical scenario with 2 x TIPs works successfully.
+# If we don't do this, vADC cluster may sit in "Error" state until the next housekeeper run
+# after a first TIP Group has been created.
+#
+# AWS Docs reference on instance types and secondary IPs:
+# http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI
 #
 if [[ $numTIPs < 2 ]]; then
     numTIPs=2
@@ -397,7 +403,7 @@ safe_aws ec2 describe-instances --region $region \
 
 myLocalIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 
-# What's the ENI of my eth0? We'll need it to add/remove private IPs.
+# What's the ENI ID of my eth0? We'll need it to add/remove private IPs.
 # Find .NetworkInterfaces where .PrivateIpAddresses[].PrivateIpAddress = $myLocalIP,
 # then extract the .NetworkInterfaceId
 eniID=$(cat $resFName | \
