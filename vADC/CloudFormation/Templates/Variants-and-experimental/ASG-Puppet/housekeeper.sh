@@ -384,10 +384,11 @@ for tipGroup in "${!tipArray[@]}"; do
     fi
 done
 
-# We would like to always have at least one secondary IP available for TIPs
+# We would like to always have at least two secondary IPs available, to ensure
+# configuration for a typical scenario with 2 x TIPs works successfully.
 #
-if [[ $numTIPs == 0 ]]; then
-    numTIPs=1
+if [[ $numTIPs < 2 ]]; then
+    numTIPs=2
 fi
 
 # Get a JSON for ourselves in $resFName
