@@ -6,7 +6,7 @@
 #
 # The purpose of this script is to perform housekeeping on a running vADC cluster:
 # - Remove vADC nodes that aren't in "running" state
-# - Add or remove secondary private IPs to vADC node to match number of vADCs in the cluster
+# - Add or remove secondary private IPs to vADC node to match number of configured Traffic IPs in the cluster
 #   * this is to help deal with Traffic IPs as each EIP needs a secondary private IP
 #
 # We expect the following vars passed in:
@@ -335,20 +335,53 @@ else
     delTag "$housekeeperTag" "$statusWorking"
 fi
 
-#
-# *****************************************************************************
-#
 # Make sure this instance has the right number of private IP addresses - as many as there are
-# vADC nodes in the cluster
-
-# If we pushed config, $configDir may be different from what it was before
-# Let's "cd" into it again
-cd $configDir
-
-# Let's assume that the number of clustered vADCs = number of config files in $configDir,
-# since we've just did a clean-up above.
+# Traffic IPs assigned to all TIP Groups
 #
-numvADCS=$(ls -1 | wc -l | awk '{print $1}')
+# ip-10-8-2-115:~# echo 'TrafficIPGroups.getIPAddresses "Web VIP"' | /usr/bin/zcli 
+# ["13.54.192.46","54.153.152.253"]
+# ip-10-8-2-115:~# echo 'TrafficIPGroups.getTrafficIPGroupNames' | /usr/bin/zcli 
+# ["Web VIP"]
+#
+# Get configured TIP Groups
+tipArray=( )
+zresponse=$(echo 'TrafficIPGroups.getTrafficIPGroupNames' | /usr/bin/zcli)
+if [[ "$?" == 0 ]]; then
+    IFS='[]",' read -r -a tmpArray <<< "$zresponse"
+    for i in "${!tmpArray[@]}"; do
+        if [[ ${tmpArray[i]} != "" ]]; then
+            tipArray+=( "${tmpArray[i]}" );
+        fi
+    done
+    unset tmpArray
+    s_list=$(echo ${tipArray[@]/%/,} | sed -e "s/,$//g")
+    logMsg "037: Got Traffic IP groups: \"$s_list\""
+else
+    logMsg "038: Error getting Traffic IP Groups; perhaps none configured yet"
+fi
+
+# Iterate over TIP Groups we found; count the total number of TIPs in all of them
+#
+numTIPs=0
+for tipGroup in "${!tipArray[@]}"; do
+    zresponse=$(echo "TrafficIPGroups.getIPAddresses \"${tipArray[$tipGroup]}\"" | /usr/bin/zcli)
+    if [[ "$?" == 0 ]]; then
+        IFS='[]",' read -r -a tmpArray <<< "$zresponse"
+        for i in "${!tmpArray[@]}"; do
+            if [[ ${tmpArray[i]} != "" ]]; then
+                tipIPArray+=( "${tmpArray[i]}" );
+            fi
+        done
+        unset tmpArray
+        if [[ ${#tipIPArray[*]} != 0 ]]; then
+            let "numTIPs += ${#tipIPArray[*]}"
+        fi
+        s_list=$(echo ${tipIPArray[@]/%/,} | sed -e "s/,$//g")
+        logMsg "039: Got Traffic IPs for TIP Group \"${tipArray[$tipGroup]}\": \"$s_list\"; numTIPs is now $numTIPs"
+    else
+        logMsg "040: Error getting Traffic IPs from TIP Group \"${tipArray[$tipGroup]}\""
+    fi
+done
 
 # Get a JSON for ourselves in $resFName
 safe_aws ec2 describe-instances --region $region \
@@ -373,14 +406,14 @@ myPrivateIPs=( $(cat $resFName | \
     select(.Primary==false) | \
     .PrivateIpAddress") )
 
-# Compare the number of my private IPs with the number of vADCs in my cluster
-if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
+# Compare the number of my secondary private IPs with the number of TIPs in my cluster
+if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
     # There's a difference; we need to adjust
-    logMsg "037: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numvADCS"
-    if (( $numvADCS > ${#myPrivateIPs[*]} )); then
+    logMsg "041: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numTIPs"
+    if (( $numTIPs > ${#myPrivateIPs[*]} )); then
         # Need to add IPs
-        let "delta = $numvADCS - ${#myPrivateIPs[*]}"
-        logMsg "038: Adding $delta private IPs to ENI $eniID"
+        let "delta = $numTIPs - ${#myPrivateIPs[*]}"
+        logMsg "042: Adding $delta private IPs to ENI $eniID"
         safe_aws ec2 assign-private-ip-addresses \
             --region $region \
             --network-interface-id $eniID \
@@ -396,10 +429,10 @@ if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
             select(.Primary==false) | \
             select (.Association.PublicIp==null) | \
             .PrivateIpAddress") )
-        let "delta = ${#myPrivateIPs[*]} - $numvADCS"
+        let "delta = ${#myPrivateIPs[*]} - $numTIPs"
         # If we need to remove more IPs than we have without EIPs, then only remove those we can
         if (( $delta > ${#myFreePrivateIPs[*]} )); then
-            logMsg "039: Need to delete $delta, but can only do ${#myFreePrivateIPs[*]}; the rest is tied with EIPs."
+            logMsg "043: Need to delete $delta, but can only do ${#myFreePrivateIPs[*]}; the rest is tied with EIPs."
             delta=${#myFreePrivateIPs[*]}
         fi
         for ((i=0; i < $delta; i++)); do
@@ -407,7 +440,7 @@ if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
             let "num %= ${#myFreePrivateIPs[*]}"
             ipToDelete=${myFreePrivateIPs[$num]}
             let "j = i + 1"
-            logMsg "040: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
+            logMsg "044: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
             # Not using "safe_aws" here; it's OK to fail - we'll just retry the next time round.
             aws ec2 unassign-private-ip-addresses \
                 --region $region \
@@ -416,9 +449,9 @@ if [[ "${#myPrivateIPs[*]}" != "$numvADCS" ]]; then
             sleep 3
         done
     fi
-    logMsg "041: Done adjusting private IPs."
+    logMsg "045: Done adjusting private IPs."
 else
-    logMsg "042: No need to adjust private IPs."
+    logMsg "046: No need to adjust private IPs."
 fi
 
 exit 0
