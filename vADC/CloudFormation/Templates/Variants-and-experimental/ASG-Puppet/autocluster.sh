@@ -79,7 +79,7 @@ backoff=$RANDOM
 let "backoff %= 30"
 sleep $backoff
 
-myInstanceID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+myInstanceID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 # Execute AWS CLI command "safely": if error occurs - backoff exponentially
 # If succeeded - return 0 and save output, if any, in $resFName
 # Given this script runs once only, the "failure isn't an option".

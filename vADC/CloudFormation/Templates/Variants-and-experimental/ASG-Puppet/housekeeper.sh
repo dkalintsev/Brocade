@@ -20,6 +20,7 @@
 # - ec2:DeleteTags
 #
 export PATH=$PATH:/usr/local/bin
+export ZEUSHOME=/opt/zeus
 logFile="/var/log/housekeeper.log"
 configDir="/opt/zeus/zxtm/conf/zxtms"
 configSync="/opt/zeus/zxtm/bin/replicate-config"
@@ -90,7 +91,7 @@ if [[ "$?" != "0" ]]; then
     exit 1
 fi
 
-myInstanceID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+myInstanceID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 
 # Execute AWS CLI command "safely": if error occurs - backoff exponentially
 # If succeeded - return 0 and save output, if any, in $resFName
@@ -383,11 +384,17 @@ for tipGroup in "${!tipArray[@]}"; do
     fi
 done
 
+# We would like to always have at least one secondary IP available for TIPs
+#
+if [[ $numTIPs == 0 ]]; then
+    numTIPs=1
+fi
+
 # Get a JSON for ourselves in $resFName
 safe_aws ec2 describe-instances --region $region \
     --instance-id $myInstanceID --output json
 
-myLocalIP=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
+myLocalIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 
 # What's the ENI of my eth0? We'll need it to add/remove private IPs.
 # Find .NetworkInterfaces where .PrivateIpAddresses[].PrivateIpAddress = $myLocalIP,
