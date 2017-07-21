@@ -14,9 +14,9 @@
 #
 # logMsg uses "nnn: <message>" format, where "nnn" is sequential. If you end up
 # adding or removing logMsg calls in this script, run the following command to re-apply
-# the sequence:
+# the sequence (replace "_" with space after logMsg):
 #
-# perl -i -000pe 's/(logMsg "001..)/$1 . sprintf("%03d", ++$n)/ge' UpdateClusterConfig.sh
+# perl -i -000pe 's/(logMsg_")(...)/$1 . sprintf("%03d", ++$n)/ge' UpdateClusterConfig.sh
 #
 # If you have a better idea for debugging / traceability - open an issue or even better
 # a pull request ;)
@@ -76,21 +76,21 @@ if [[ "$verbose" == "" ]]; then
 fi
 
 if [[ -f $lockF ]]; then
-    logMsg "002: Found lock file, exiting."
+    logMsg "001: Found lock file, exiting."
     exit 1
 fi
 
 # We need jq, which should have been installed by now.
 which jq >/dev/null 2>&1
 if [[ "$?" != "0" ]]; then
-    logMsg "003: Looks like jq isn't installed; quiting."
+    logMsg "002: Looks like jq isn't installed; quiting."
     exit 1
 fi
 
 # We also need aws cli tools.
 which aws >/dev/null 2>&1
 if [[ "$?" != "0" ]]; then
-    logMsg "004: Looks like AWS CLI tools isn't installed; quiting."
+    logMsg "003: Looks like AWS CLI tools isn't installed; quiting."
     exit 1
 fi
 
@@ -110,7 +110,7 @@ safe_aws () {
             # Doing random sleep up to 45 sec, then back to try again.
             backoff=$RANDOM
             let "backoff %= 45"
-            logMsg "005: safe_aws \"$*\" exceeded retry budget. Sleeping for $backoff second(s), then back to work.."
+            logMsg "004: safe_aws \"$*\" exceeded retry budget. Sleeping for $backoff second(s), then back to work.."
             sleep $backoff
             retries=0
             backoff=1
@@ -118,7 +118,7 @@ safe_aws () {
         aws $* > $resFName 2>>$awscliLogF
         errCode=$?
         if [[ "$errCode" != "0" ]]; then
-            logMsg "006: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
+            logMsg "005: AWS CLI returned error $errCode; sleeping for $backoff seconds.."
             sleep $backoff
             let "retries += 1"
         fi
@@ -195,17 +195,17 @@ declare -a list
 findTaggedInstances $stateTag $statusActive ADCs
 list=( $(cat $jqResFName | sort -rn) )
 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-logMsg "007: Checking for $statusActive vTMs; got: \"$s_list\""
+logMsg "006: Checking for $statusActive vTMs; got: \"$s_list\""
 
 # Next, let's get the private IP of the first one; that will be our vADC1PrivateIP
 if [[ ${#list[*]} > 0 ]]; then
     instance=${list[0]}
     getInstanceIP $instance
     vADC1PrivateIP=$(cat $jqResFName)
-    logMsg "008: Picked value for __vADC1PrivateIP__: \"$vADC1PrivateIP\""
+    logMsg "007: Picked value for __vADC1PrivateIP__: \"$vADC1PrivateIP\""
 else
     # Didn't find any active vADCs
-    logMsg "009: Didn't find any active vADCs; exiting for now."
+    logMsg "008: Didn't find any active vADCs; exiting for now."
     exit 0
 fi
 
@@ -233,7 +233,7 @@ for instance in ${list[@]}; do
 done
 
 if [[ "$vADCnDNS" == "" ]]; then
-    logMsg "010: Failed to get vTM names; bailing for now."
+    logMsg "009: Failed to get vTM names; bailing for now."
     exit 0
 fi
 
@@ -243,7 +243,7 @@ fi
 findTaggedInstances "Name" $pool_tag
 list=( $(cat $jqResFName | sort -rn) )
 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-logMsg "011: Looking for running instances tagged with $pool_tag; got: \"$s_list\""
+logMsg "010: Looking for running instances tagged with $pool_tag; got: \"$s_list\""
 
 # Now, let's walk through the resulting list and create a Puppet manifest definition for the pool
 #
@@ -253,14 +253,14 @@ nodes=""
 
 if [[ ${#list[*]} == 0 ]]; then
     # Didn't find any running backend pool members; let's set our pool to 127.0.0.1
-    logMsg "012: Didn't find any running backend pool instances; will set the pool to 127.0.0.1:80"
+    logMsg "011: Didn't find any running backend pool instances; will set the pool to 127.0.0.1:80"
     nodes="$left_in""127.0.0.1""$right_in"
 else
     for instance in ${list[@]}; do
         # "for" loop here is good enough since we don't expect any spaces in the array elements
         getInstanceIP $instance
         IP=$(cat $jqResFName)
-        logMsg "013: Private IP of Instance $instance is $IP"
+        logMsg "012: Private IP of Instance $instance is $IP"
         a="$left_in""$IP""$right_in"
         if [[ "${list[@]: -1}" != "$instance" ]]; then
             nodes="$nodes""$a"","
@@ -297,17 +297,17 @@ fi
 if [[ -s "$changeSetF" ]]; then
     cat "$changeSetF" > "$manifest"
 else
-    logMsg "014: Edit resulted in an empty file for some reason. Not creating $manifest."
+    logMsg "013: Edit resulted in an empty file for some reason. Not creating $manifest."
     exit 1
 fi
 
 newsha=$(shasum "$manifest" | awk '{print $1}')
 
 if [[ "$newsha" != "$oldsha" ]]; then
-    logMsg "015: File changed; need to update"
+    logMsg "014: File changed; need to update"
     # Yeah, I know - error code "10" is arbitrary. Let me know if you have a better idea.
     exit 10
 else
-    logMsg "016: No changes needed."
+    logMsg "015: No changes needed."
     exit 0
 fi

@@ -768,7 +768,7 @@
                 "command" : "rm -f /tmp/ctab.txt"
               },
 
-              "07-run_housekeeper" : {
+              "07-run_housekeeper_once" : {
                 "command" : "/opt/aws/housekeeper.sh > /var/log/housekeeper-out.log 2>&1"
               },
 
