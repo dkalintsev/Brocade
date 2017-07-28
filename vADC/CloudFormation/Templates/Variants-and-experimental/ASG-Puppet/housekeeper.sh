@@ -401,6 +401,99 @@ fi
 safe_aws ec2 describe-instances --region $region \
     --instance-id $myInstanceID --output json
 
+# Get my InstanceType to check if we're not trying to grab more IPs than possible
+instanceType=$(cat $resFName | \
+    jq -r ".Reservations[].Instances[].InstanceType")
+
+case $instanceType in
+    t2.small)
+    maxPIPs=4
+    ;;
+    t2.medium)
+    maxPIPs=6
+    ;;
+    t2.large)
+    maxPIPs=12
+    ;;
+    m4.large)
+    maxPIPs=10
+    ;;
+    m4.xlarge)
+    maxPIPs=15
+    ;;
+    m4.2xlarge)
+    maxPIPs=15
+    ;;
+    m4.4xlarge)
+    maxPIPs=30
+    ;;
+    m4.10xlarge)
+    maxPIPs=30
+    ;;
+    m3.medium)
+    maxPIPs=6
+    ;;
+    m3.large)
+    maxPIPs=10
+    ;;
+    m3.xlarge)
+    maxPIPs=15
+    ;;
+    m3.2xlarge)
+    maxPIPs=30
+    ;;
+    c4.large)
+    maxPIPs=10
+    ;;
+    c4.xlarge)
+    maxPIPs=15
+    ;;
+    c4.2xlarge)
+    maxPIPs=15
+    ;;
+    c4.4xlarge)
+    maxPIPs=30
+    ;;
+    c4.8xlarge)
+    maxPIPs=30
+    ;;
+    c3.large)
+    maxPIPs=10
+    ;;
+    c3.xlarge)
+    maxPIPs=15
+    ;;
+    c3.2xlarge)
+    maxPIPs=15
+    ;;
+    c3.4xlarge)
+    maxPIPs=30
+    ;;
+    c3.8xlarge)
+    maxPIPs=30
+    ;;
+    r3.large)
+    maxPIPs=10
+    ;;
+    r3.xlarge)
+    maxPIPs=15
+    ;;
+    r3.2xlarge)
+    maxPIPs=15
+    ;;
+    r3.4xlarge)
+    maxPIPs=30
+    ;;
+    r3.8xlarge)
+    maxPIPs=30
+    ;;
+esac
+
+if (( "$numTIPs" > "$maxPIPs" )); then
+    logMsg "041: Asking for more private IPs (${numTIPs}) than our instance type ${instanceType} supports (${maxPIPs}); caping it."
+    numTIPs="$maxPIPs"
+fi
+
 myLocalIP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 
 # What's the ENI ID of my eth0? We'll need it to add/remove private IPs.
@@ -423,11 +516,11 @@ myPrivateIPs=( $(cat $resFName | \
 # Compare the number of my secondary private IPs with the number of TIPs in my cluster
 if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
     # There's a difference; we need to adjust
-    logMsg "041: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numTIPs"
+    logMsg "042: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numTIPs"
     if (( $numTIPs > ${#myPrivateIPs[*]} )); then
         # Need to add IPs
         let "delta = $numTIPs - ${#myPrivateIPs[*]}"
-        logMsg "042: Adding $delta private IPs to ENI $eniID"
+        logMsg "043: Adding $delta private IPs to ENI $eniID"
         safe_aws ec2 assign-private-ip-addresses \
             --region $region \
             --network-interface-id $eniID \
@@ -446,7 +539,7 @@ if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
         let "delta = ${#myPrivateIPs[*]} - $numTIPs"
         # If we need to remove more IPs than we have without EIPs, then only remove those we can
         if (( $delta > ${#myFreePrivateIPs[*]} )); then
-            logMsg "043: Need to delete $delta, but can only do ${#myFreePrivateIPs[*]}; the rest is tied with EIPs."
+            logMsg "044: Need to delete $delta, but can only do ${#myFreePrivateIPs[*]}; the rest is tied with EIPs."
             delta=${#myFreePrivateIPs[*]}
         fi
         for ((i=0; i < $delta; i++)); do
@@ -454,7 +547,7 @@ if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
             let "num %= ${#myFreePrivateIPs[*]}"
             ipToDelete=${myFreePrivateIPs[$num]}
             let "j = i + 1"
-            logMsg "044: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
+            logMsg "045: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
             # Not using "safe_aws" here; it's OK to fail - we'll just retry the next time round.
             aws ec2 unassign-private-ip-addresses \
                 --region $region \
@@ -463,9 +556,9 @@ if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
             sleep 3
         done
     fi
-    logMsg "045: Done adjusting private IPs."
+    logMsg "046: Done adjusting private IPs."
 else
-    logMsg "046: No need to adjust private IPs."
+    logMsg "047: No need to adjust private IPs."
 fi
 
 exit 0
