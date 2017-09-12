@@ -221,8 +221,14 @@ login=$(grep rest_user $manifest_template | cut -f2 -d\')
 pass=$(grep rest_pass $manifest_template | cut -f2 -d\')
 
 # Get the list of names of clustered vADCs from the cluster
-# API version 3.7 seems to work in 17.2 (which uses API v4.0). Using 3.7 for backward compatibility.
-list=( $( curl -s -u $login:$pass -k https://$vADC1PrivateIP:9070/api/tm/3.7/config/active/traffic_managers/ -o - | jq '.children[].name' ) )
+#
+# First, get the latest API version supported by this vADC.
+# List all endpoints and get the last one, e.g. "/api/tm/5.0/"
+#
+endpoint=$(curl -s -u ${login}:${pass} -k https://$vADC1PrivateIP:9070/api/tm | jq -r ".children[].href" | sort | tail -1)
+#
+# Next, talk to the cluster on the API endpoint we've discovered:
+list=( $( curl -s -u ${login}:${pass} -k https://$vADC1PrivateIP:9070${endpoint}config/active/traffic_managers/ -o - | jq '.children[].name' ) )
 
 for instance in ${list[@]}; do
     if [[ "${list[@]: -1}" != "$instance" ]]; then
