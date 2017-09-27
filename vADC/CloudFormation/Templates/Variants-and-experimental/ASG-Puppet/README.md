@@ -17,7 +17,7 @@ The purpose of this solution is to provide a self-healing, self-managing cluster
 * `autocluster.sh` is ran once when a vADC is started by ASG. It checks for an existing cluster looking for specific tags. If it finds an existing cluster, it joins. If it doesn't, elections are run and if won the new instance forms a new cluster. The script is then terminated and vADC enters regular operation.
 * `housekeeper.sh` is ran from cron on each running vADC instance in the cluster. It performs the following activities:
     - Checks if cluster members are the same as the running vADC instances. If it finds any cluster members that don't have a corresponding running vADC instance, it removes them from the cluster.
-    - Ensures that each running vADC instance has as many secondary private IP addresses as there are running vADC instances. This is to ensure each vADC can accommodate all Traffic IPs in case of failure of others.
+    - Ensures that each running vADC instance has as many secondary private IP addresses as there are Traffic IPs configured, but no more than the EC2 instance can handle. This is to ensure each vADC can accommodate all Traffic IPs in case of failure of others.
 
 ## What does the template do
 
@@ -52,7 +52,7 @@ You will also notice the template creates a NAT gateway - it's there purely to p
 
 While clearly being a demo, the template was designed to provide building blocks for roughly the following real life workflow:
 
-1. You have an application that requires vADC. You could be using a [old simple template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Old) customised for your needs to deploy an unconfigured vADC cluster.
+1. You have an application that requires vADC. You could be using the [old simple template](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Old) customised for your needs to deploy an unconfigured vADC cluster.
 2. You deploy the rest of your application.
 3. Using vADC UI and CLI, as necessary, you configure vADC cluster as your appication requires.
 4. Once the above is in place, you run [`genNodeConfig`](https://forge.puppet.com/tuxinvader/brocadevtm#tools-gennodeconfig) to create a Puppet manifest from your running configured cluster.
@@ -67,13 +67,13 @@ For a demo / test purposes, you can use this template directly. Make note of the
 
 - The original Puppet manifest (as per step 4 above) was generated using the following command, after configuring vADC cluster through the UI:
 
-`/etc/puppet/modules/brocadevtm/bin/genNodeConfig -h x.x.x.x -U admin -P Password123 -v 3.9 -sn -o cluster-config-template-raw.pp`
+`/etc/puppet/modules/brocadevtm/bin/genNodeConfig -h x.x.x.x -U admin -P Password123 -v 4.0 -sn -o cluster-config-template-raw.pp`
 
 When generating your own manifest, please make sure to give `-v` parameter the REST API [version that matches your vADC cluster software](https://forge.puppet.com/tuxinvader/brocadevtm#rest-version-mapping).
 
 - Template doesn't add a license key or link your cluster to a Services Director.
 
-- Tested with vADC version 11.0, 11.1, and 17.1. Please let me know if you hit problems.
+- Tested with vADC version 11.1, 17.1, 17.2, and 17.3. Please let me know if you hit problems.
 
 ## How to use
 
