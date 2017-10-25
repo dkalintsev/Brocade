@@ -25,7 +25,7 @@ export PATH=$PATH:/usr/local/bin
 logFile="/var/log/UpdateClusterConfig.log"
 
 clusterID="{{ClusterID}}"
-region="{{Region}}"
+#region="{{Region}}" ## Replaced by call to metadata server - see region=$() below
 verbose="{{Verbose}}"
 pool="{{Pool}}"
 pool_tag="{{PoolTag}}"
@@ -93,6 +93,8 @@ if [[ "$?" != "0" ]]; then
     logMsg "003: Looks like AWS CLI tools isn't installed; quiting."
     exit 1
 fi
+
+region=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r)
 
 # Execute AWS CLI command "safely": if error occurs - backoff exponentially
 # If succeeded - return 0 and save output, if any, in $resFName

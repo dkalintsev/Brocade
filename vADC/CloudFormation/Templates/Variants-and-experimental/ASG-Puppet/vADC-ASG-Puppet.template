@@ -184,14 +184,14 @@
 
     "SSLPublicKey": {
       "Type": "CommaDelimitedList",
-      "Default": "-----BEGIN CERTIFICATE-----,MIIDVjCCAj4CCQCFxCco1wRsijANBgkqhkiG9w0BAQUFADBtMQswCQYDVQQGEwJV,UzERMA8GA1UECBMITmV3IFlvcmsxETAPBgNVBAcTCEJyb29rbHluMSEwHwYDVQQK,ExhFeGFtcGxlIEJyb29rbHluIENvbXBhbnkxFTATBgNVBAMUDCouY29ycC5sb2Nh,bDAeFw0xNjA5MjcwMTQ5MTlaFw0xNzA5MjcwMTQ5MTlaMG0xCzAJBgNVBAYTAlVT,MREwDwYDVQQIEwhOZXcgWW9yazERMA8GA1UEBxMIQnJvb2tseW4xITAfBgNVBAoT,GEV4YW1wbGUgQnJvb2tseW4gQ29tcGFueTEVMBMGA1UEAxQMKi5jb3JwLmxvY2Fs,MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsV4APYXFTIvUrFl46OJ2,6dnv2x6yXbV+WH1f2S0i6/1a1b/7hLhPa8S9xxPwWh/ykpZvrNV3tAZ04fA6R68Y,Bq29Vd5APZNrOWN7LIOaxNMgPSgY7c5ZB6eqlGPa7sACftvSiDEghjpn77RC7n56,LulnNHrZVxdz2Ot1fu/FXtmuBX1D9mxNLjQyfN0AiHb2Q85qGLd0anQWCNuaOXJn,CUXWJFNh8M21UN7bvGBNe0dbCumJFmbpqWQ2wrAZBso/lpv97paoaf/xzGFwYrgr,haqyAs0EJOn1oE8lqApkuorFOrgNb4CZJGz85KKJgfErin7VLR6+V9AcrEeUTXie,0wIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQBzDFQdfZcNQLr8RthsjkuUS7jftm+w,XrgGZ6EPq9andnj0EPL/r+3O2O56eOSHE8XhtJC/9i/aY3gWKCSB1TiZX3i2JJ/O,zn3o5ysEtiDN+pjYMj/xEYbGQShmrDBvjgiKWR5ADZ4A/p8axcAZK+y/CGs9g3lZ,OfpRwBpPxa0q4rU3eo25MEmhbqoJD4N39piczXhR02GZ2sFEka4bdWUGezdm9/Cb,J8PF2AjrD9dp3s5ulQapArMMZszE9w4zbNbgYevRfKERgHq3tedy2J9ukE4BUO5m,taUDGSBEHS37pjs5LtdcZmVonsD04TqIrlZCMAkApHI9r/pPDi1CAluJ,-----END CERTIFICATE-----",
+      "Default": "-----BEGIN CERTIFICATE-----,MIIDVjCCAj4CCQDV3CoPt5+GrzANBgkqhkiG9w0BAQUFADBtMQswCQYDVQQGEwJV,UzERMA8GA1UECBMITmV3IFlvcmsxETAPBgNVBAcTCEJyb29rbHluMSEwHwYDVQQK,ExhFeGFtcGxlIEJyb29rbHluIENvbXBhbnkxFTATBgNVBAMUDCouY29ycC5sb2Nh,bDAeFw0xNzEwMjUwMjI4MDhaFw0xODEwMjUwMjI4MDhaMG0xCzAJBgNVBAYTAlVT,MREwDwYDVQQIEwhOZXcgWW9yazERMA8GA1UEBxMIQnJvb2tseW4xITAfBgNVBAoT,GEV4YW1wbGUgQnJvb2tseW4gQ29tcGFueTEVMBMGA1UEAxQMKi5jb3JwLmxvY2Fs,MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3eLwS9QNDCq4DY686o81,pEMgr1SVlzwB8kbPVZdDAYF0kqk2j3SsqGoxHmvVCx3mpZL3wpXoNF0N4D0DzkDY,AAVzpN9tfUY3MB7SkurGbw2bfhX0CvTvwFPgdJebccfc45jP+8s2UF3hG5pa9A5X,1G0OpQR4GqRBetxZg/hdYm9oDYgceoQfaiy1JO6Qszwnbeyr6Pv00PrK8f0tH3J7,ONW4B/7Jrrk+doYGw7RGP+bpAGkldHdUWyd0+pFv4j5/CbXI341onJns20gLnr8I,gZ90B4ZXi7ZQynu3aJ8c83yrGNft/CtxH6rjEFK9L9lhGPSenzjdh5Vn7Y8+DLS7,JQIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQBJX8pXSR9eHUcwAeLhWyvV5x3h1Iur,jjQFgZKVi2VQum69Nz4bBqgU/yZ7i3ncDqBIv0z6NItA1cAoyMeOUpdWHLiub06Y,u9djeUQ3MV+KOfACuOTJaJEzp5Tff5ZiNznIz4hM7LBY3yEKloj38qD/vou40xF+,kuwi3llXWqRQbg/gqlE19S7JZWp1WX5CeNEnX/aw3Sh7wZ1t01wV/JxPccjJ7Owo,Ezz2k309yqERx1S0UNTKjIHe0tP+MnyHQyBsKV7jPyTSbMu4UqIw0JLaPh145Rn2,oAJdNUT5OfZ9P5e1RIwXRjVyyiA+cUIUKNn7G2yJLynbVo1HD9J/qekO,-----END CERTIFICATE-----",
       "Description": "Change your public SSL key newlines to commas."
     },
 
     "SSLPrivateKey": {
       "Type": "CommaDelimitedList",
       "NoEcho": "true",
-      "Default": "-----BEGIN RSA PRIVATE KEY-----,MIIEpQIBAAKCAQEAsV4APYXFTIvUrFl46OJ26dnv2x6yXbV+WH1f2S0i6/1a1b/7,hLhPa8S9xxPwWh/ykpZvrNV3tAZ04fA6R68YBq29Vd5APZNrOWN7LIOaxNMgPSgY,7c5ZB6eqlGPa7sACftvSiDEghjpn77RC7n56LulnNHrZVxdz2Ot1fu/FXtmuBX1D,9mxNLjQyfN0AiHb2Q85qGLd0anQWCNuaOXJnCUXWJFNh8M21UN7bvGBNe0dbCumJ,FmbpqWQ2wrAZBso/lpv97paoaf/xzGFwYrgrhaqyAs0EJOn1oE8lqApkuorFOrgN,b4CZJGz85KKJgfErin7VLR6+V9AcrEeUTXie0wIDAQABAoIBAQCJiwHYs9HqqE0G,UmQHBQd+FXmBjO546PPPn3oiqnP4WYKFW9mqdFtykSEyLm4nFbtAndSATRIE0zT0,uRwY1tlk5Hp9Clr65UUzPcgZHv14QNkxU9TxJSG5Y/ZOGJmAp/nHcqRy5NX6AXT0,V+/HjuElW+6irdm5RgCaaQ22oC2IfS5QAR+zfrEbgkKqcgE5HthM9UqzYxBMHwHs,9i2ounbmDlziR7RHu5+ggCmSMGbcLocOugLORz2pS0zMQ+WY1Bch4R00T/k/Pg2t,q33M28D523bHWoUCHOf0vb6POqFA62sJJQeb01O9sDawJQwB6QwDrUUzzwzIdDAE,yqOO4iSBAoGBAOhm4VK7mrpg6behbheqEf0/VUb2ZBT/xVDiblCYfgx1k7q6h6jn,wcJaPMe3nJCUNoCvRBja7LMb/BMLKhts3WhUPUDfhKdq/sQ57q888EomA8f++20D,pSNno/nlQ0/CfkxrCBq6gzSiTuxSamTdGkkFtbK+a0tlSUXGA+mhx4dhAoGBAMNg,iJ8CeH4l/79PGpa6Boxqq3NNdIyauxxqHbolFuQCS8ROlPnObKLXXQIGJRn6EbaO,sqNg5LWrDQQtG6gBdgtDaqQWXkoPN8GgYqNdr400RP9/26SLvDuAGPR3v27a1GNZ,mu3bXlSYgMBeA+WLEuseWl9TnBVjneW2xTiudrazAoGBAJ2ZnvW26W+45uWzYHBF,0ds2RsNPtYEUDiAS3ZJkRx514Y/AjNy7BYeiIBOj7VWSXP+ZW4mrdNblhGT5rj1Y,7zCf58YFjfTmtwwk6TsHDUCLVQccYC6GSUegMe/2TFZbY8C42I8fqnhYFUNnhGUQ,F5IrgBNN1H8VmcHqTZ7zKdchAoGBAKngSoovZMMSmR8nUZASqVT3/qEfjKIge2aG,YdiTHScdU/GY/fGCaXThWs5Ct4mxpCseQfbKbbIDyyqBahWXR6MdeCC6DjvIpYsm,v/0ZnWViOEgLTNfyY7U8ePY/FGT3wkmsBIih/5AAlZotZKf2V3m1h5BxKzpxxj2Q,wES7dR7/AoGAfMrRP0+MedNHM9D0xL3pnzlPIia5ud8qx0bakdU6I7Cs+PGGH0ya,9D3OIenVmzZCfslifMWCkIKbgn6H/je5fbVAOuylE7w1QzA55vn53QRyLkPcej5t,jRktZBy7qY7jdbvXIwVpMOnUaodxvQFvfbu2VgsktEAbOQWjKRKlPLY=,-----END RSA PRIVATE KEY-----",
+      "Default": "-----BEGIN RSA PRIVATE KEY-----,MIIEpAIBAAKCAQEA3eLwS9QNDCq4DY686o81pEMgr1SVlzwB8kbPVZdDAYF0kqk2,j3SsqGoxHmvVCx3mpZL3wpXoNF0N4D0DzkDYAAVzpN9tfUY3MB7SkurGbw2bfhX0,CvTvwFPgdJebccfc45jP+8s2UF3hG5pa9A5X1G0OpQR4GqRBetxZg/hdYm9oDYgc,eoQfaiy1JO6Qszwnbeyr6Pv00PrK8f0tH3J7ONW4B/7Jrrk+doYGw7RGP+bpAGkl,dHdUWyd0+pFv4j5/CbXI341onJns20gLnr8IgZ90B4ZXi7ZQynu3aJ8c83yrGNft,/CtxH6rjEFK9L9lhGPSenzjdh5Vn7Y8+DLS7JQIDAQABAoIBAQCyiwzvB2ekVa+a,gTP0zl3MmpNvYfGpKwkp6d6mMbwiNwgVh4G2t5zDPAfgQcbBVkMlEni5JCUgFYy3,1oD8c2MbyUc/8OVKe7imyPaKb85SyDFJqOKh+mv9Z8DiMKhNSxSsM2eQZfmDe7dK,nc74OZ5k+YhiMpFuZqOl+C8zqSODsz/bEfMO7mncXTDzfm3Ds/uUrTEUyUgm9kYd,In+ECfmdEz5pVm4DOtpfCO/d+WYjsEE5ILCA3O/kTNOLnhseu/ZCHx4czpZk251D,C/24ASkZ+AIuWWhPY/S/epNi7KJMAP2srwnHCaAY+7qToyLZX4xzsjDQ0pV18ojs,OQlMEwGVAoGBAPW0bGHEq03B6q9v2U/lBxlDc0ASr77ro4NJH9hLcSMoZ1xX9fYf,xxBIg/LAL2vJ9+ou+91BtEl9XZdnukUopMwc/EDa42AyCoaRwY4ybh4iWSnKXkx0,DuaeMML4oF2XTSoz2rOv7qMhpMaCwhR87ivZqKMks7q5o7r2FOIT7yx3AoGBAOcv,BqQUVPaOnctaeQBY6jysXcCCOzIpXol296sjSnB2Y9iL4RTLVg7ZfY6Fd3vO11NR,XJ0UqX6erVOvcdYN5JG+erQpAtCs18noQVqVKX8s4n3DLO70+O9eG5IzPwxyItNA,gv/3WvW81smbnsEEbFohWLVP6RfAzZQZNjlxAqhDAoGAF4lvEHaMimhXGPM3+AVS,hsMFWU/w8fMUuNDachfYAKwwKpJqh2dH5HFt4mUypbq1OwPBMNLIeHm/628OUu2v,y7XDHFtbiK2CgJ2Z0wtVrSFRNUWjfuNnQgRJW4QBqLWDuNU60Be8Xngslq+T8+57,ykuRcf9kEDEUVCaanYWXVcUCgYBd1fejF+GYpjCkPtfIbU6+S9RN9E5kwOfvcgt7,OnrXhSZn2fcFQrdulZbiB4iFB2LdHbQyyhU2IOAHjLnvAXqaMa+Keu76ln2MJaqJ,QuwyA5z3IQaXA3Ybap5UTFq2CYnbJ19E2Djib8Da2kCo5cu5Fbn09jeNfaO0Dju1,OwqyEwKBgQCrdXaopUXK/O/BBHylzlQKb5ymHzSBrOpcD7Jgf9SMt6ef8ZaVA0Bj,NqnSARWJxTn8/OLF4vObCVoctWYXTadObVhV2yc3/rVxo6nQQ5biC/L9wHw8AtNI,23TzgRq4oPZ1CkpejM8THkcOEYE31mkw3BAF2nFwdZbOSrVi5V9LJA==,-----END RSA PRIVATE KEY-----",
       "Description": "Change your private SSL key newlines to commas."
     }
 
@@ -690,8 +690,6 @@
                     { "Ref": "AWS::StackName" },
                     "vADC-Cluster"
                   ]]},
-                  "AdminPass": { "Ref": "AdminPass" },
-                  "Region": { "Ref": "AWS::Region" },
                   "Verbose": "Yes"
                 },
                 "mode": "000755",
@@ -704,7 +702,6 @@
                     { "Ref": "AWS::StackName" },
                     "vADC-Cluster"
                   ]]},
-                  "Region": { "Ref": "AWS::Region" },
                   "Verbose": "Yes"
                 },
                 "mode": "000755",
@@ -955,7 +952,6 @@
                     { "Ref": "AWS::StackName" },
                     "vADC-Cluster"
                   ]]},
-                  "Region": { "Ref": "AWS::Region" },
                   "Verbose": "Yes",
                   "Pool": "WebPool",
                   "PoolTag": { "Fn::Join": [ "-", [
@@ -1191,25 +1187,6 @@
 
     "WSLaunchConfig": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
-      "Metadata": {
-        "Comment": "Install a simple application",
-        "AWS::CloudFormation::Init" : {
-          "configSets" : {
-            "default" : [ "CreateFiles", "RunCommands" ]
-          },
-
-          "CreateFiles": {
-          },
-
-          "RunCommands" : {
-            "commands" : {
-              "01-create-index-html" : {
-                "command" : "echo \"developer_mode_accepted     yes\" > /tmp/aaa"
-              }
-            }
-          }
-        }
-      },
 
       "Properties": {
         "InstanceType": "t2.nano",

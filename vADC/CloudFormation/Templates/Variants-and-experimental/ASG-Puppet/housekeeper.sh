@@ -26,7 +26,7 @@ configDir="/opt/zeus/zxtm/conf/zxtms"
 configSync="/opt/zeus/zxtm/bin/replicate-config"
 
 clusterID="{{ClusterID}}"
-region="{{Region}}"
+#region="{{Region}}" ## Replaced by call to metadata server - see region=$() below
 verbose="{{Verbose}}"
 
 # Tag for Housekeeping
@@ -92,6 +92,8 @@ if [[ "$?" != "0" ]]; then
 fi
 
 myInstanceID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+
+region=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r)
 
 # Execute AWS CLI command "safely": if error occurs - backoff exponentially
 # If succeeded - return 0 and save output, if any, in $resFName
@@ -269,72 +271,6 @@ cleanup
 touch $lockF
 
 declare -a list
-findTaggedInstances $housekeeperTag $statusWorking
-list=( $(cat $jqResFName | grep -v $myInstanceID) )
-s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-logMsg "023: Checking if an other node is already running Housekeeping; got: \"$s_list\""
-if [[ ${#list[*]} > 0 ]]; then
-    logMsg "024: Yep, somebody beat us to it. Exiting."
-    exit 0
-else
-    logMsg "025: Ok, let's get to work."
-fi
-
-logMsg "026: Getting lock on $statusWorking.."
-getLock "$housekeeperTag" "$statusWorking"
-
-# List running instances in our vADC cluster
-logMsg "027: Checking running instances.."
-findTaggedInstances
-cat $jqResFName | sort -rn > $runningInstF
-# Sanity check - we should see ourselves in the $jqResFName
-list=( $(cat $jqResFName | grep "$myInstanceID") )
-if [[ ${#list[*]} == 0 ]]; then
-    # LOL WAT
-    logMsg "028: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
-    exit 1
-fi
-
-# Go to cluster config dir, and look for instanceIDs in config files there
-logMsg "029: Checking clustered instances.."
-cd $configDir
-grep -i instanceid * | awk '{print $2}' | sort -rn | uniq > $clusteredInstF
-# Compare the two, looking for lines that are present in the cluster config but missing in running list
-logMsg "030: Comparing list of running and clustered instances.."
-diff $clusteredInstF $runningInstF | awk '/^</ { print $2 }' > $deltaInstF
-# Check if our InstanceId is in the list of running
-# ***************
-
-if [[ -s $deltaInstF ]]; then
-    # There is some delta - $deltaInstF isn't empty
-    declare -a list
-    list=( $(cat $deltaInstF) )
-    s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-    logMsg "031: Delta detected - need to do clean up the following instances: $s_list."
-    for instId in ${list[@]}; do
-        grep -l "$instId" * >> $filesF 2>/dev/null
-    done
-    if [[ -s $filesF ]]; then
-        svIFS=$IFS
-        IFS=$(echo -en "\n\b")
-        files=( $(cat $filesF) )
-        IFS=$svIFS
-        for file in "${files[@]}"; do
-            logMsg "032: Deleting $file.."
-            rm -f "$file"
-        done
-        logMsg "033: Synchronising cluster state and sleeping to let things settle.."
-        $configSync
-        sleep 60
-        logMsg "034: All done, exiting."
-    else
-        logMsg "035: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
-    fi
-    delTag "$housekeeperTag" "$statusWorking"
-else
-    logMsg "036: No delta, exiting."
-    delTag "$housekeeperTag" "$statusWorking"
-fi
 
 # Make sure this instance has the right number of private IP addresses - as many as there are
 # Traffic IPs assigned to all TIP Groups
@@ -559,6 +495,75 @@ if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
     logMsg "046: Done adjusting private IPs."
 else
     logMsg "047: No need to adjust private IPs."
+fi
+
+# Next, do "garbage collection" on the terminated vTM instances, if any
+#
+findTaggedInstances $housekeeperTag $statusWorking
+list=( $(cat $jqResFName | grep -v $myInstanceID) )
+s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
+logMsg "023: Checking if an other node is already running Housekeeping; got: \"$s_list\""
+if [[ ${#list[*]} > 0 ]]; then
+    logMsg "024: Yep, somebody beat us to it. Exiting."
+    exit 0
+else
+    logMsg "025: Ok, let's get to work."
+fi
+
+logMsg "026: Getting lock on $statusWorking.."
+getLock "$housekeeperTag" "$statusWorking"
+
+# List running instances in our vADC cluster
+logMsg "027: Checking running instances.."
+findTaggedInstances
+cat $jqResFName | sort -rn > $runningInstF
+# Sanity check - we should see ourselves in the $jqResFName
+list=( $(cat $jqResFName | grep "$myInstanceID") )
+if [[ ${#list[*]} == 0 ]]; then
+    # LOL WAT
+    logMsg "028: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
+    exit 1
+fi
+
+# Go to cluster config dir, and look for instanceIDs in config files there
+logMsg "029: Checking clustered instances.."
+cd $configDir
+grep -i instanceid * | awk '{print $2}' | sort -rn | uniq > $clusteredInstF
+# Compare the two, looking for lines that are present in the cluster config but missing in running list
+logMsg "030: Comparing list of running and clustered instances.."
+diff $clusteredInstF $runningInstF | awk '/^</ { print $2 }' > $deltaInstF
+# Check if our InstanceId is in the list of running
+# ***************
+
+if [[ -s $deltaInstF ]]; then
+    # There is some delta - $deltaInstF isn't empty
+    declare -a list
+    list=( $(cat $deltaInstF) )
+    s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
+    logMsg "031: Delta detected - need to do clean up the following instances: $s_list."
+    for instId in ${list[@]}; do
+        grep -l "$instId" * >> $filesF 2>/dev/null
+    done
+    if [[ -s $filesF ]]; then
+        svIFS=$IFS
+        IFS=$(echo -en "\n\b")
+        files=( $(cat $filesF) )
+        IFS=$svIFS
+        for file in "${files[@]}"; do
+            logMsg "032: Deleting $file.."
+            rm -f "$file"
+        done
+        logMsg "033: Synchronising cluster state and sleeping to let things settle.."
+        $configSync
+        sleep 60
+        logMsg "034: All done, exiting."
+    else
+        logMsg "035: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
+    fi
+    delTag "$housekeeperTag" "$statusWorking"
+else
+    logMsg "036: No delta, exiting."
+    delTag "$housekeeperTag" "$statusWorking"
 fi
 
 exit 0

@@ -21,8 +21,9 @@ export PATH=$PATH:/usr/local/bin
 logFile="/var/log/autoscluster.log"
 
 clusterID="{{ClusterID}}"
-adminPass="{{AdminPass}}"
-region="{{Region}}"
+#adminPass="{{AdminPass}}" # replaced by call to meta-data; whole cluster uses the same password.
+adminPass=$(curl -s http://169.254.169.254/latest/user-data | tr " " '\n' | awk -F= '/^pass/ {print $2}')
+#region="{{Region}}" ## Replaced by call to metadata server - see region=$() below
 verbose="{{Verbose}}"
 
 # Tags for Cluster and Elections
@@ -80,6 +81,9 @@ let "backoff %= 30"
 sleep $backoff
 
 myInstanceID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+
+region=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r)
+
 # Execute AWS CLI command "safely": if error occurs - backoff exponentially
 # If succeeded - return 0 and save output, if any, in $resFName
 # Given this script runs once only, the "failure isn't an option".
