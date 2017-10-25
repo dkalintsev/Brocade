@@ -293,9 +293,9 @@ if [[ "$?" == 0 ]]; then
     done
     unset tmpArray
     s_list=$(echo ${tipArray[@]/%/,} | sed -e "s/,$//g")
-    logMsg "037: Got Traffic IP groups: \"$s_list\""
+    logMsg "023: Got Traffic IP groups: \"$s_list\""
 else
-    logMsg "038: Error getting Traffic IP Groups; perhaps none configured yet"
+    logMsg "024: Error getting Traffic IP Groups; perhaps none configured yet"
 fi
 
 # Iterate over TIP Groups we found; count the total number of TIPs in all of them
@@ -315,9 +315,9 @@ for tipGroup in "${!tipArray[@]}"; do
             let "numTIPs += ${#tipIPArray[*]}"
         fi
         s_list=$(echo ${tipIPArray[@]/%/,} | sed -e "s/,$//g")
-        logMsg "039: Got Traffic IPs for TIP Group \"${tipArray[$tipGroup]}\": \"$s_list\"; numTIPs is now $numTIPs"
+        logMsg "025: Got Traffic IPs for TIP Group \"${tipArray[$tipGroup]}\": \"$s_list\"; numTIPs is now $numTIPs"
     else
-        logMsg "040: Error getting Traffic IPs from TIP Group \"${tipArray[$tipGroup]}\""
+        logMsg "026: Error getting Traffic IPs from TIP Group \"${tipArray[$tipGroup]}\""
     fi
 done
 
@@ -426,7 +426,7 @@ case $instanceType in
 esac
 
 if (( "$numTIPs" > "$maxPIPs" )); then
-    logMsg "041: Asking for more private IPs (${numTIPs}) than our instance type ${instanceType} supports (${maxPIPs}); caping it."
+    logMsg "027: Asking for more private IPs (${numTIPs}) than our instance type ${instanceType} supports (${maxPIPs}); caping it."
     numTIPs="$maxPIPs"
 fi
 
@@ -452,11 +452,11 @@ myPrivateIPs=( $(cat $resFName | \
 # Compare the number of my secondary private IPs with the number of TIPs in my cluster
 if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
     # There's a difference; we need to adjust
-    logMsg "042: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numTIPs"
+    logMsg "028: Need to adjust the number of private IPs. Have: ${#myPrivateIPs[*]}, need: $numTIPs"
     if (( $numTIPs > ${#myPrivateIPs[*]} )); then
         # Need to add IPs
         let "delta = $numTIPs - ${#myPrivateIPs[*]}"
-        logMsg "043: Adding $delta private IPs to ENI $eniID"
+        logMsg "029: Adding $delta private IPs to ENI $eniID"
         safe_aws ec2 assign-private-ip-addresses \
             --region $region \
             --network-interface-id $eniID \
@@ -475,7 +475,7 @@ if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
         let "delta = ${#myPrivateIPs[*]} - $numTIPs"
         # If we need to remove more IPs than we have without EIPs, then only remove those we can
         if (( $delta > ${#myFreePrivateIPs[*]} )); then
-            logMsg "044: Need to delete $delta, but can only do ${#myFreePrivateIPs[*]}; the rest is tied with EIPs."
+            logMsg "030: Need to delete $delta, but can only do ${#myFreePrivateIPs[*]}; the rest is tied with EIPs."
             delta=${#myFreePrivateIPs[*]}
         fi
         for ((i=0; i < $delta; i++)); do
@@ -483,7 +483,7 @@ if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
             let "num %= ${#myFreePrivateIPs[*]}"
             ipToDelete=${myFreePrivateIPs[$num]}
             let "j = i + 1"
-            logMsg "045: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
+            logMsg "031: Deleting IP $j of $delta - $ipToDelete from ENI $eniID"
             # Not using "safe_aws" here; it's OK to fail - we'll just retry the next time round.
             aws ec2 unassign-private-ip-addresses \
                 --region $region \
@@ -492,9 +492,9 @@ if [[ "${#myPrivateIPs[*]}" != "$numTIPs" ]]; then
             sleep 3
         done
     fi
-    logMsg "046: Done adjusting private IPs."
+    logMsg "032: Done adjusting private IPs."
 else
-    logMsg "047: No need to adjust private IPs."
+    logMsg "033: No need to adjust private IPs."
 fi
 
 # Next, do "garbage collection" on the terminated vTM instances, if any
@@ -502,35 +502,35 @@ fi
 findTaggedInstances $housekeeperTag $statusWorking
 list=( $(cat $jqResFName | grep -v $myInstanceID) )
 s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-logMsg "023: Checking if an other node is already running Housekeeping; got: \"$s_list\""
+logMsg "034: Checking if an other node is already running Housekeeping; got: \"$s_list\""
 if [[ ${#list[*]} > 0 ]]; then
-    logMsg "024: Yep, somebody beat us to it. Exiting."
+    logMsg "035: Yep, somebody beat us to it. Exiting."
     exit 0
 else
-    logMsg "025: Ok, let's get to work."
+    logMsg "036: Ok, let's get to work."
 fi
 
-logMsg "026: Getting lock on $statusWorking.."
+logMsg "037: Getting lock on $statusWorking.."
 getLock "$housekeeperTag" "$statusWorking"
 
 # List running instances in our vADC cluster
-logMsg "027: Checking running instances.."
+logMsg "038: Checking running instances.."
 findTaggedInstances
 cat $jqResFName | sort -rn > $runningInstF
 # Sanity check - we should see ourselves in the $jqResFName
 list=( $(cat $jqResFName | grep "$myInstanceID") )
 if [[ ${#list[*]} == 0 ]]; then
     # LOL WAT
-    logMsg "028: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
+    logMsg "039: Cant't seem to be able to find ourselves running; did you set ClusterID correctly? I have: \"$clusterID\". Bailing."
     exit 1
 fi
 
 # Go to cluster config dir, and look for instanceIDs in config files there
-logMsg "029: Checking clustered instances.."
+logMsg "040: Checking clustered instances.."
 cd $configDir
 grep -i instanceid * | awk '{print $2}' | sort -rn | uniq > $clusteredInstF
 # Compare the two, looking for lines that are present in the cluster config but missing in running list
-logMsg "030: Comparing list of running and clustered instances.."
+logMsg "041: Comparing list of running and clustered instances.."
 diff $clusteredInstF $runningInstF | awk '/^</ { print $2 }' > $deltaInstF
 # Check if our InstanceId is in the list of running
 # ***************
@@ -540,7 +540,7 @@ if [[ -s $deltaInstF ]]; then
     declare -a list
     list=( $(cat $deltaInstF) )
     s_list=$(echo ${list[@]/%/,} | sed -e "s/,$//g")
-    logMsg "031: Delta detected - need to do clean up the following instances: $s_list."
+    logMsg "042: Delta detected - need to do clean up the following instances: $s_list."
     for instId in ${list[@]}; do
         grep -l "$instId" * >> $filesF 2>/dev/null
     done
@@ -550,19 +550,19 @@ if [[ -s $deltaInstF ]]; then
         files=( $(cat $filesF) )
         IFS=$svIFS
         for file in "${files[@]}"; do
-            logMsg "032: Deleting $file.."
+            logMsg "043: Deleting $file.."
             rm -f "$file"
         done
-        logMsg "033: Synchronising cluster state and sleeping to let things settle.."
+        logMsg "044: Synchronising cluster state and sleeping to let things settle.."
         $configSync
         sleep 60
-        logMsg "034: All done, exiting."
+        logMsg "045: All done, exiting."
     else
-        logMsg "035: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
+        logMsg "046: Hmm, can't find config files with matching instanceIDs; maybe somebody deleted them already. Exiting."
     fi
     delTag "$housekeeperTag" "$statusWorking"
 else
-    logMsg "036: No delta, exiting."
+    logMsg "047: No delta, exiting."
     delTag "$housekeeperTag" "$statusWorking"
 fi
 
