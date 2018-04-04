@@ -1,5 +1,8 @@
 # Brocade vADC + example web server + config by Puppet
 
+## NOTE: THIS TEMPLATE IS NO LONGER SUPPORTED
+## PLEASE USE [THIS ONE] (https://github.com/dkalintsev/vADC-CloudFormation/tree/master/Template) INSTEAD.
+
 This template builds on the [older parent one](https://github.com/dkalintsev/Brocade/tree/master/vADC/CloudFormation/Templates/Old) (while changing a few things - more on that below). Most notably, it adds an EC2 instance that uses a [vADC Puppet Module](https://forge.puppet.com/tuxinvader/brocadevtm) to push some very simple configuration to the vADC cluster, making it serve content over HTTP and HTTPS from two Web Server EC2 instances.
 
 As before, this is a proof-of-concept quality code, which is meant to provide a starting point for you to develop a production-ready solution.

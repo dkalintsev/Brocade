@@ -1,5 +1,8 @@
 # What happened here?
 
+## NOTE: THIS REPO HOLDS A BUNCH OF TEMPLATE THAT ARE NO LONGER SUPPORTED
+## PLEASE USE [THIS] (https://github.com/dkalintsev/vADC-CloudFormation/) INSTEAD.
+
 I've moved things around:
 
 - Templates that probably not worth keeping updated are now in `Old`.
